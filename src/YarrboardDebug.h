@@ -13,8 +13,8 @@
 #ifndef YARR_DEBUG_H
 #define YARR_DEBUG_H
 
+#include "ProtocolController.h"
 #include "etl/vector.h"
-#include "protocol.h"
 #include <Arduino.h>
 #include <LittleFS.h>
 #include <esp_core_dump.h>
@@ -99,14 +99,14 @@ class StringPrint : public Print
 class WebsocketPrint : public Print
 {
   public:
-    WebsocketPrint() : _pos(0) {}
+    WebsocketPrint(ProtocolController& protocol) : _proto(protocol), _pos(0) {}
 
     size_t write(uint8_t b) override
     {
       if (b == '\n') {
         if (_pos > 0) {
           _buf[_pos] = '\0';
-          sendDebug(_buf);
+          _proto.sendDebug(_buf);
           _pos = 0; // reset buffer
         }
       } else {
@@ -119,6 +119,7 @@ class WebsocketPrint : public Print
     }
 
   private:
+    ProtocolController& _proto;
     static constexpr size_t BUF_SIZE = 256;
     char _buf[BUF_SIZE];
     size_t _pos;
@@ -126,6 +127,5 @@ class WebsocketPrint : public Print
 
 extern YarrboardPrint YBP;
 extern StringPrint startupLogger;
-extern WebsocketPrint networkLogger;
 
 #endif /* !YARR_PREFS_H */

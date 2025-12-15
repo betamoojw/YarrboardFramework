@@ -28,7 +28,8 @@
 
 YarrboardApp::YarrboardApp() : config(*this),
                                network(*this, config),
-                               protocol(*this, config)
+                               protocol(*this, config),
+                               networkLogger(protocol)
 {
 }
 

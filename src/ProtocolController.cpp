@@ -6,7 +6,7 @@
   License: GPLv3
 */
 
-#include "protocol.h"
+#include "ProtocolController.h"
 #include "ConfigManager.h"
 #include "YarrboardApp.h"
 #include "YarrboardDebug.h"

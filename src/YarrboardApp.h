@@ -15,7 +15,8 @@
 
 #include "ConfigManager.h"
 #include "NetworkController.h"
-#include "protocol.h"
+#include "ProtocolController.h"
+#include "YarrboardDebug.h"
 
 class YarrboardApp
 {
@@ -34,6 +35,7 @@ class YarrboardApp
 
   private:
     unsigned int framerate;
+    WebsocketPrint networkLogger;
 };
 
 #endif /* YarrboardApp_h */

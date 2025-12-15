@@ -19,8 +19,6 @@
 
 // #include "adchelper.h"
 #include "ota.h"
-// #include "prefs.h"
-#include "protocol.h"
 
 // generated at build by running "gulp" in the firmware directory.
 #include "index.html.gz.h"

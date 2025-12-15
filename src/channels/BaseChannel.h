@@ -10,6 +10,7 @@
 #define YARR_BASE_CHANNEL_H
 
 #include "ArduinoJson.h"
+#include "ProtocolController.h"
 #include "YarrboardConfig.h"
 #include "etl/array.h"
 #include "mqtt.h"

@@ -15,7 +15,6 @@ bool has_coredump = false;
 
 YarrboardPrint YBP;
 StringPrint startupLogger;
-WebsocketPrint networkLogger;
 
 static void heartbeatTask(void* pv)
 {
