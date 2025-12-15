@@ -37,3 +37,4 @@ examples/arduino/
 examples/platformio/lib/PsychicHttp
 examples/websockets/lib/PsychicHttp
 Visual\ Micro
+*.gz.h

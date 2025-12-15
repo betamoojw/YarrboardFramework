@@ -22,14 +22,6 @@ class YarrboardApp
 
     void setup();
     void loop();
-
-    PsychicHttpServer* getServer();
-
-  protected:
-    PsychicHttpServer* server;
-
-    // etl::list<PsychicHandler*> _handlers;
-    // PsychicClientCallback _onOpen = nullptr;
 };
 
 #endif /* YarrboardApp_h */
