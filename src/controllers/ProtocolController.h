@@ -120,6 +120,12 @@ class ProtocolController : public BaseController
 
     void handleSerialJson();
 
+    void handleGetConfig(JsonVariantConst input, JsonVariant output);
+    void handleGetStats(JsonVariantConst input, JsonVariant output);
+    void handleGetUpdate(JsonVariantConst input, JsonVariant output);
+    void handleGetFullConfig(JsonVariantConst input, JsonVariant output);
+    void handleGetNetworkConfig(JsonVariantConst input, JsonVariant output);
+    void handleGetAppConfig(JsonVariantConst input, JsonVariant output);
     void handleSetGeneralConfig(JsonVariantConst input, JsonVariant output);
     void handleSetNetworkConfig(JsonVariantConst input, JsonVariant output);
     void handleSetAuthenticationConfig(JsonVariantConst input, JsonVariant output);

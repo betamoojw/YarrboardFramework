@@ -45,7 +45,56 @@ ProtocolController::ProtocolController(YarrboardApp& app) : BaseController(app, 
 bool ProtocolController::setup()
 {
   registerCommand(NOBODY, "ping", &ProtocolController::handlePing);
-  registerCommand(ADMIN, "set_config", &ProtocolController::handleSetGeneralConfig);
+
+  registerCommand(GUEST, "get_config", &ProtocolController::handleGetConfig);
+  registerCommand(GUEST, "get_stats", &ProtocolController::handleGetStats);
+  registerCommand(GUEST, "get_update", &ProtocolController::handleGetUpdate);
+  registerCommand(GUEST, "set_theme", &ProtocolController::handleSetTheme);
+  registerCommand(GUEST, "set_brightness", &ProtocolController::handleSetBrightness);
+
+  registerCommand(GUEST, "play_sound", &ProtocolController::handlePlaySound);
+
+  registerCommand(GUEST, "set_pwm_channel", &ProtocolController::handleSetPWMChannel);
+  registerCommand(GUEST, "toggle_pwm_channel", &ProtocolController::handleTogglePWMChannel);
+  registerCommand(GUEST, "set_relay_channel", &ProtocolController::handleSetRelayChannel);
+  registerCommand(GUEST, "toggle_relay_channel", &ProtocolController::handleToggleRelayChannel);
+  registerCommand(GUEST, "set_servo_channel", &ProtocolController::handleSetServoChannel);
+  registerCommand(GUEST, "set_stepper_channel", &ProtocolController::handleSetStepperChannel);
+
+#ifdef YB_IS_BRINEOMATIC
+  registerCommand(GUEST, "start_watermaker", &ProtocolController::handleStartWatermaker);
+  registerCommand(GUEST, "flush_watermaker", &ProtocolController::handleFlushWatermaker);
+  registerCommand(GUEST, "pickle_watermaker", &ProtocolController::handlePickleWatermaker);
+  registerCommand(GUEST, "depickle_watermaker", &ProtocolController::handleDepickleWatermaker);
+  registerCommand(GUEST, "stop_watermaker", &ProtocolController::handleStopWatermaker);
+  registerCommand(GUEST, "idle_watermaker", &ProtocolController::handleIdleWatermaker);
+  registerCommand(GUEST, "manual_watermaker", &ProtocolController::handleManualWatermaker);
+  registerCommand(GUEST, "set_watermaker", &ProtocolController::handleSetWatermaker);
+  registerCommand(GUEST, "brineomatic_save_general_config", &ProtocolController::handleBrineomaticSaveGeneralConfig);
+  registerCommand(GUEST, "brineomatic_save_hardware_config", &ProtocolController::handleBrineomaticSaveHardwareConfig);
+  registerCommand(GUEST, "brineomatic_save_safeguards_config", &ProtocolController::handleBrineomaticSaveSafeguardsConfig);
+#endif
+
+  registerCommand(ADMIN, "set_general_config", &ProtocolController::handleSetGeneralConfig);
+  registerCommand(ADMIN, "save_config", &ProtocolController::handleSaveConfig);
+  registerCommand(ADMIN, "get_full_config", &ProtocolController::handleGetFullConfig);
+  registerCommand(ADMIN, "get_network_config", &ProtocolController::handleGetNetworkConfig);
+  registerCommand(ADMIN, "get_app_config", &ProtocolController::handleGetAppConfig);
+  registerCommand(ADMIN, "set_network_config", &ProtocolController::handleSetNetworkConfig);
+  registerCommand(ADMIN, "set_authentication_config", &ProtocolController::handleSetAuthenticationConfig);
+  registerCommand(ADMIN, "set_webserver_config", &ProtocolController::handleSetWebServerConfig);
+  registerCommand(ADMIN, "set_mqtt_config", &ProtocolController::handleSetMQTTConfig);
+  registerCommand(ADMIN, "set_misc_config", &ProtocolController::handleSetMiscellaneousConfig);
+  registerCommand(ADMIN, "restart", &ProtocolController::handleRestart);
+  registerCommand(ADMIN, "crashme", &ProtocolController::handleCrashMe);
+  registerCommand(ADMIN, "factory_reset", &ProtocolController::handleFactoryReset);
+  registerCommand(ADMIN, "ota_start", &ProtocolController::handleOTAStart);
+
+  registerCommand(ADMIN, "config_pwm_channel", &ProtocolController::handleConfigPWMChannel);
+  registerCommand(ADMIN, "config_relay_channel", &ProtocolController::handleConfigRelayChannel);
+  registerCommand(ADMIN, "config_servo_channel", &ProtocolController::handleConfigServoChannel);
+  registerCommand(ADMIN, "config_stepper_channel", &ProtocolController::handleConfigStepperChannel);
+  registerCommand(ADMIN, "config_adc", &ProtocolController::handleConfigADC);
 
   // send serial a config off the bat
   if (_cfg.app_enable_serial) {
@@ -207,114 +256,15 @@ void ProtocolController::handleReceivedJSON(JsonVariantConst input, JsonVariant 
     }
   }
 
-  // only pages with no login requirements
+  // login is a tricky one that we really need mode + connection information for.
   if (!strcmp(cmd, "login"))
     return handleLogin(input, output, mode, connection);
-  // else if (!strcmp(cmd, "ping"))
-  //   return handlePing(input, output);
+  // hello is also a tricky one since we need to let them know their role.
   else if (!strcmp(cmd, "hello"))
     return generateHelloJSON(output, role);
-
-  // TODO: we don't actually need to require login
-  // need to be logged in from here on out.
-  //  if (!isLoggedIn(input, mode, connection))
-  //      return generateLoginRequiredJSON(output);
-
-  // commands for using the boards
-  if (role == GUEST || role == ADMIN) {
-    if (!strcmp(cmd, "get_config"))
-      return generateConfigJSON(output);
-    else if (!strcmp(cmd, "get_stats"))
-      return generateStatsJSON(output);
-    else if (!strcmp(cmd, "get_update"))
-      return generateUpdateJSON(output);
-    else if (!strcmp(cmd, "play_sound"))
-      return handlePlaySound(input, output);
-    else if (!strcmp(cmd, "set_pwm_channel"))
-      return handleSetPWMChannel(input, output);
-    else if (!strcmp(cmd, "toggle_pwm_channel"))
-      return handleTogglePWMChannel(input, output);
-    else if (!strcmp(cmd, "set_relay_channel"))
-      return handleSetRelayChannel(input, output);
-    else if (!strcmp(cmd, "toggle_relay_channel"))
-      return handleToggleRelayChannel(input, output);
-    else if (!strcmp(cmd, "set_servo_channel"))
-      return handleSetServoChannel(input, output);
-    else if (!strcmp(cmd, "set_stepper_channel"))
-      return handleSetStepperChannel(input, output);
-    else if (!strcmp(cmd, "set_theme"))
-      return handleSetTheme(input, output);
-    else if (!strcmp(cmd, "set_brightness"))
-      return handleSetBrightness(input, output);
-#ifdef YB_IS_BRINEOMATIC
-    else if (!strcmp(cmd, "start_watermaker"))
-      return handleStartWatermaker(input, output);
-    else if (!strcmp(cmd, "flush_watermaker"))
-      return handleFlushWatermaker(input, output);
-    else if (!strcmp(cmd, "pickle_watermaker"))
-      return handlePickleWatermaker(input, output);
-    else if (!strcmp(cmd, "depickle_watermaker"))
-      return handleDepickleWatermaker(input, output);
-    else if (!strcmp(cmd, "stop_watermaker"))
-      return handleStopWatermaker(input, output);
-    else if (!strcmp(cmd, "idle_watermaker"))
-      return handleIdleWatermaker(input, output);
-    else if (!strcmp(cmd, "manual_watermaker"))
-      return handleManualWatermaker(input, output);
-    else if (!strcmp(cmd, "set_watermaker"))
-      return handleSetWatermaker(input, output);
-    else if (!strcmp(cmd, "brineomatic_save_general_config"))
-      return handleBrineomaticSaveGeneralConfig(input, output);
-    else if (!strcmp(cmd, "brineomatic_save_hardware_config"))
-      return handleBrineomaticSaveHardwareConfig(input, output);
-    else if (!strcmp(cmd, "brineomatic_save_safeguards_config"))
-      return handleBrineomaticSaveSafeguardsConfig(input, output);
-#endif
-    else if (!strcmp(cmd, "logout"))
-      return handleLogout(input, output, mode, connection);
-  }
-
-  // commands for changing settings
-  if (role == ADMIN) {
-    if (!strcmp(cmd, "set_general_config"))
-      return handleSetGeneralConfig(input, output);
-    else if (!strcmp(cmd, "save_config"))
-      return handleSaveConfig(input, output);
-    else if (!strcmp(cmd, "get_full_config"))
-      return generateFullConfigMessage(output);
-    else if (!strcmp(cmd, "get_network_config"))
-      return generateNetworkConfigMessage(output);
-    else if (!strcmp(cmd, "set_network_config"))
-      return handleSetNetworkConfig(input, output);
-    else if (!strcmp(cmd, "get_app_config"))
-      return generateAppConfigMessage(output);
-    else if (!strcmp(cmd, "set_authentication_config"))
-      return handleSetAuthenticationConfig(input, output);
-    else if (!strcmp(cmd, "set_webserver_config"))
-      return handleSetWebServerConfig(input, output);
-    else if (!strcmp(cmd, "set_mqtt_config"))
-      return handleSetMQTTConfig(input, output);
-    else if (!strcmp(cmd, "set_misc_config"))
-      return handleSetMiscellaneousConfig(input, output);
-    else if (!strcmp(cmd, "restart"))
-      return handleRestart(input, output);
-    else if (!strcmp(cmd, "crashme"))
-      return handleCrashMe(input, output);
-    else if (!strcmp(cmd, "factory_reset"))
-      return handleFactoryReset(input, output);
-    else if (!strcmp(cmd, "ota_start"))
-      return handleOTAStart(input, output);
-    else if (!strcmp(cmd, "config_pwm_channel"))
-      return handleConfigPWMChannel(input, output);
-    else if (!strcmp(cmd, "config_relay_channel"))
-      return handleConfigRelayChannel(input, output);
-    else if (!strcmp(cmd, "config_servo_channel"))
-      return handleConfigServoChannel(input, output);
-    else if (!strcmp(cmd, "config_stepper_channel"))
-      return handleConfigStepperChannel(input, output);
-    else if (!strcmp(cmd, "config_adc"))
-      return handleConfigADC(input, output);
-  }
+  // logout is another special case.
+  else if (!strcmp(cmd, "logout"))
+    return handleLogout(input, output, mode, connection);
 
   // if we got here, no bueno.
   String error = "Invalid command: " + String(cmd);
@@ -339,6 +289,36 @@ void ProtocolController::generateHelloJSON(JsonVariant output, UserRole role)
   output["name"] = _cfg.board_name;
   output["brightness"] = _cfg.globalBrightness;
   output["firmware_version"] = YB_FIRMWARE_VERSION;
+}
+
+void ProtocolController::handleGetConfig(JsonVariantConst input, JsonVariant output)
+{
+  generateConfigJSON(output);
+}
+
+void ProtocolController::handleGetStats(JsonVariantConst input, JsonVariant output)
+{
+  generateStatsJSON(output);
+}
+
+void ProtocolController::handleGetUpdate(JsonVariantConst input, JsonVariant output)
+{
+  generateUpdateJSON(output);
+}
+
+void ProtocolController::handleGetFullConfig(JsonVariantConst input, JsonVariant output)
+{
+  generateFullConfigMessage(output);
+}
+
+void ProtocolController::handleGetNetworkConfig(JsonVariantConst input, JsonVariant output)
+{
+  generateNetworkConfigMessage(output);
+}
+
+void ProtocolController::handleGetAppConfig(JsonVariantConst input, JsonVariant output)
+{
+  generateAppConfigMessage(output);
 }
 
 void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVariant output)
