@@ -13,7 +13,7 @@
 #ifndef YARR_DEBUG_H
 #define YARR_DEBUG_H
 
-#include "ProtocolController.h"
+#include "controllers/ProtocolController.h"
 #include "etl/vector.h"
 #include <Arduino.h>
 #include <LittleFS.h>

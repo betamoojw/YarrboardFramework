@@ -15,7 +15,6 @@
 
 #include "ConfigManager.h"
 #include "IntervalTimer.h"
-#include "ProtocolController.h"
 #include "RGBController.h"
 #include "RollingAverage.h"
 #include "YarrboardDebug.h"
@@ -27,6 +26,7 @@
 #include "controllers/NTPController.h"
 #include "controllers/NetworkController.h"
 #include "controllers/OTAController.h"
+#include "controllers/ProtocolController.h"
 
 #include <cstring>         // For strcmp
 #include <etl/algorithm.h> // For finding/removing

@@ -8,9 +8,9 @@
 
 #include "OTAController.h"
 #include "ConfigManager.h"
-#include "ProtocolController.h"
 #include "YarrboardApp.h"
 #include "YarrboardDebug.h"
+#include "controllers/ProtocolController.h"
 
 OTAController* OTAController::_instance = nullptr;
 

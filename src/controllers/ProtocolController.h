@@ -11,6 +11,7 @@
 
 #include "YarrboardConfig.h"
 #include "controllers/AuthController.h"
+#include "controllers/BaseController.h"
 #include "utility.h"
 #include <Arduino.h>
 #include <ArduinoJson.h>
@@ -33,13 +34,13 @@
 class YarrboardApp;
 class ConfigManager;
 
-class ProtocolController
+class ProtocolController : public BaseController
 {
   public:
-    ProtocolController(YarrboardApp& app, ConfigManager& config);
+    ProtocolController(YarrboardApp& app);
 
-    void setup();
-    void loop();
+    bool setup() override;
+    void loop() override;
 
     const char* getRoleText(UserRole role);
     bool isSerialAuthenticated();
@@ -59,9 +60,6 @@ class ProtocolController
     void incrementSentMessages();
 
   private:
-    YarrboardApp& _app;
-    ConfigManager& _config;
-
     bool is_serial_authenticated = false;
     unsigned long previousMessageMillis = 0;
     unsigned int receivedMessages = 0;

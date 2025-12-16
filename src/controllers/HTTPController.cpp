@@ -1,8 +1,8 @@
 #include "controllers/HTTPController.h"
 #include "ConfigManager.h"
-#include "ProtocolController.h"
 #include "YarrboardApp.h"
 #include "YarrboardDebug.h"
+#include "controllers/ProtocolController.h"
 
 HTTPController::HTTPController(YarrboardApp& app) : BaseController(app, "http")
 {

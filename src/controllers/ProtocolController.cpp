@@ -6,7 +6,7 @@
   License: GPLv3
 */
 
-#include "ProtocolController.h"
+#include "controllers/ProtocolController.h"
 #include "ConfigManager.h"
 #include "YarrboardApp.h"
 #include "YarrboardDebug.h"
@@ -38,25 +38,20 @@
   #include "stepper_channel.h"
 #endif
 
-ProtocolController::ProtocolController(YarrboardApp& app, ConfigManager& config) : _app(app),
-                                                                                   _config(config)
+ProtocolController::ProtocolController(YarrboardApp& app) : BaseController(app, "protocol")
 {
 }
 
-//
-//
-//.        OLD CODE BELOW.
-//
-//
-
-void ProtocolController::setup()
+bool ProtocolController::setup()
 {
   // send serial a config off the bat
-  if (_config.app_enable_serial) {
+  if (_cfg.app_enable_serial) {
     JsonDocument output;
     generateConfigJSON(output);
     serializeJson(output, Serial);
   }
+
+  return true;
 }
 
 void ProtocolController::loop()
@@ -81,7 +76,7 @@ void ProtocolController::loop()
   }
 
   // any serial port customers?
-  if (_config.app_enable_serial) {
+  if (_cfg.app_enable_serial) {
     if (Serial.available() > 0)
       handleSerialJson();
   }
@@ -278,9 +273,9 @@ void ProtocolController::generateHelloJSON(JsonVariant output, UserRole role)
 {
   output["msg"] = "hello";
   output["role"] = getRoleText(role);
-  output["default_role"] = getRoleText(_config.app_default_role);
-  output["name"] = _config.board_name;
-  output["brightness"] = _config.globalBrightness;
+  output["default_role"] = getRoleText(_cfg.app_default_role);
+  output["name"] = _cfg.board_name;
+  output["brightness"] = _cfg.globalBrightness;
   output["firmware_version"] = YB_FIRMWARE_VERSION;
 }
 
@@ -297,12 +292,12 @@ void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVari
   }
 
   // update variable
-  strlcpy(_config.board_name, input["board_name"] | YB_BOARD_NAME, sizeof(_config.board_name));
-  strlcpy(_config.startup_melody, input["startup_melody"] | YB_PIEZO_DEFAULT_MELODY, sizeof(_config.startup_melody));
+  strlcpy(_cfg.board_name, input["board_name"] | YB_BOARD_NAME, sizeof(_cfg.board_name));
+  strlcpy(_cfg.startup_melody, input["startup_melody"] | YB_PIEZO_DEFAULT_MELODY, sizeof(_cfg.startup_melody));
 
   // save it to file.
   char error[128];
-  if (!_config.saveConfig(error, sizeof(error)))
+  if (!_cfg.saveConfig(error, sizeof(error)))
     return generateErrorJSON(output, error);
 
   // give them the updated config
@@ -312,7 +307,7 @@ void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVari
 void ProtocolController::handleSetNetworkConfig(JsonVariantConst input, JsonVariant output)
 {
   // clear our first boot flag since they submitted the network page.
-  _config.is_first_boot = false;
+  _cfg.is_first_boot = false;
 
   char error[128];
 
@@ -350,51 +345,51 @@ void ProtocolController::handleSetNetworkConfig(JsonVariantConst input, JsonVari
   strlcpy(new_wifi_mode, input["wifi_mode"] | YB_DEFAULT_AP_MODE, sizeof(new_wifi_mode));
   strlcpy(new_wifi_ssid, input["wifi_ssid"] | YB_DEFAULT_AP_SSID, sizeof(new_wifi_ssid));
   strlcpy(new_wifi_pass, input["wifi_pass"] | YB_DEFAULT_AP_PASS, sizeof(new_wifi_pass));
-  strlcpy(_config.local_hostname, input["local_hostname"] | YB_DEFAULT_HOSTNAME, sizeof(_config.local_hostname));
+  strlcpy(_cfg.local_hostname, input["local_hostname"] | YB_DEFAULT_HOSTNAME, sizeof(_cfg.local_hostname));
 
   // make sure we can connect before we save
   if (!strcmp(new_wifi_mode, "client")) {
     // did we change username/password?
-    if (strcmp(new_wifi_ssid, _config.wifi_ssid) || strcmp(new_wifi_pass, _config.wifi_pass)) {
+    if (strcmp(new_wifi_ssid, _cfg.wifi_ssid) || strcmp(new_wifi_pass, _cfg.wifi_pass)) {
       // try connecting.
       YBP.printf("Trying new wifi %s / %s\n", new_wifi_ssid, new_wifi_pass);
       if (_app.network.connectToWifi(new_wifi_ssid, new_wifi_pass)) {
         // changing modes?
-        if (!strcmp(_config.wifi_mode, "ap"))
+        if (!strcmp(_cfg.wifi_mode, "ap"))
           WiFi.softAPdisconnect();
 
         // save for local use
-        strlcpy(_config.wifi_mode, new_wifi_mode, sizeof(_config.wifi_mode));
-        strlcpy(_config.wifi_ssid, new_wifi_ssid, sizeof(_config.wifi_ssid));
-        strlcpy(_config.wifi_pass, new_wifi_pass, sizeof(_config.wifi_pass));
+        strlcpy(_cfg.wifi_mode, new_wifi_mode, sizeof(_cfg.wifi_mode));
+        strlcpy(_cfg.wifi_ssid, new_wifi_ssid, sizeof(_cfg.wifi_ssid));
+        strlcpy(_cfg.wifi_pass, new_wifi_pass, sizeof(_cfg.wifi_pass));
 
         // save it to file.
-        if (!_config.saveConfig(error, sizeof(error)))
+        if (!_cfg.saveConfig(error, sizeof(error)))
           return generateErrorJSON(output, error);
       }
       // nope, setup our wifi back to default.
       else {
-        _app.network.connectToWifi(_config.wifi_ssid, _config.wifi_pass); // go back to our old wifi.
+        _app.network.connectToWifi(_cfg.wifi_ssid, _cfg.wifi_pass); // go back to our old wifi.
         _app.network.startServices();
         return generateErrorJSON(output, "Can't connect to new WiFi.");
       }
     } else {
       // save it to file.
-      if (!_config.saveConfig(error, sizeof(error)))
+      if (!_cfg.saveConfig(error, sizeof(error)))
         return generateErrorJSON(output, error);
     }
   }
   // okay, AP mode is easier
   else {
     // save for local use.
-    strlcpy(_config.wifi_mode, new_wifi_mode, sizeof(_config.wifi_mode));
-    strlcpy(_config.wifi_ssid, new_wifi_ssid, sizeof(_config.wifi_ssid));
-    strlcpy(_config.wifi_pass, new_wifi_pass, sizeof(_config.wifi_pass));
+    strlcpy(_cfg.wifi_mode, new_wifi_mode, sizeof(_cfg.wifi_mode));
+    strlcpy(_cfg.wifi_ssid, new_wifi_ssid, sizeof(_cfg.wifi_ssid));
+    strlcpy(_cfg.wifi_pass, new_wifi_pass, sizeof(_cfg.wifi_pass));
 
     // switch us into AP mode
     _app.network.setupWifi();
 
-    if (!_config.saveConfig(error, sizeof(error)))
+    if (!_cfg.saveConfig(error, sizeof(error)))
       return generateErrorJSON(output, error);
 
     return generateSuccessJSON(output, "AP mode successful, please connect to new network.");
@@ -443,64 +438,64 @@ void ProtocolController::handleSetAuthenticationConfig(JsonVariantConst input, J
   }
 
   // get our data
-  strlcpy(_config.admin_user, input["admin_user"] | YB_DEFAULT_ADMIN_USER, sizeof(_config.admin_user));
-  strlcpy(_config.admin_pass, input["admin_pass"] | YB_DEFAULT_ADMIN_PASS, sizeof(_config.admin_pass));
-  strlcpy(_config.guest_user, input["guest_user"] | YB_DEFAULT_GUEST_USER, sizeof(_config.guest_user));
-  strlcpy(_config.guest_pass, input["guest_pass"] | YB_DEFAULT_GUEST_PASS, sizeof(_config.guest_pass));
+  strlcpy(_cfg.admin_user, input["admin_user"] | YB_DEFAULT_ADMIN_USER, sizeof(_cfg.admin_user));
+  strlcpy(_cfg.admin_pass, input["admin_pass"] | YB_DEFAULT_ADMIN_PASS, sizeof(_cfg.admin_pass));
+  strlcpy(_cfg.guest_user, input["guest_user"] | YB_DEFAULT_GUEST_USER, sizeof(_cfg.guest_user));
+  strlcpy(_cfg.guest_pass, input["guest_pass"] | YB_DEFAULT_GUEST_PASS, sizeof(_cfg.guest_pass));
 
   if (input["default_role"]) {
     if (!strcmp(input["default_role"], "admin"))
-      _config.app_default_role = ADMIN;
+      _cfg.app_default_role = ADMIN;
     else if (!strcmp(input["default_role"], "guest"))
-      _config.app_default_role = GUEST;
+      _cfg.app_default_role = GUEST;
     else
-      _config.app_default_role = NOBODY;
+      _cfg.app_default_role = NOBODY;
   }
 
   // save it to file.
   char error[128] = "Unknown";
-  if (!_config.saveConfig(error, sizeof(error)))
+  if (!_cfg.saveConfig(error, sizeof(error)))
     return generateErrorJSON(output, error);
 }
 
 void ProtocolController::handleSetWebServerConfig(JsonVariantConst input, JsonVariant output)
 {
-  bool old_app_enable_ssl = _config.app_enable_ssl;
+  bool old_app_enable_ssl = _cfg.app_enable_ssl;
 
-  _config.app_enable_mfd = input["app_enable_mfd"] | YB_DEFAULT_APP_ENABLE_MFD;
-  _config.app_enable_api = input["app_enable_api"] | YB_DEFAULT_APP_ENABLE_API;
-  _config.app_enable_ssl = input["app_enable_ssl"] | _config.app_enable_ssl;
-  _config.server_cert = input["server_cert"] | "";
-  _config.server_key = input["server_key"] | "";
+  _cfg.app_enable_mfd = input["app_enable_mfd"] | YB_DEFAULT_APP_ENABLE_MFD;
+  _cfg.app_enable_api = input["app_enable_api"] | YB_DEFAULT_APP_ENABLE_API;
+  _cfg.app_enable_ssl = input["app_enable_ssl"] | _cfg.app_enable_ssl;
+  _cfg.server_cert = input["server_cert"] | "";
+  _cfg.server_key = input["server_key"] | "";
 
   // save it to file.
   char error[128] = "Unknown";
-  if (!_config.saveConfig(error, sizeof(error)))
+  if (!_cfg.saveConfig(error, sizeof(error)))
     return generateErrorJSON(output, error);
 
   // restart the board.
-  if (old_app_enable_ssl != _config.app_enable_ssl)
+  if (old_app_enable_ssl != _cfg.app_enable_ssl)
     ESP.restart();
 }
 
 void ProtocolController::handleSetMQTTConfig(JsonVariantConst input, JsonVariant output)
 {
-  _config.app_enable_mqtt = input["app_enable_mqtt"];
-  _config.app_enable_ha_integration = input["app_enable_ha_integration"];
-  _config.app_use_hostname_as_mqtt_uuid = input["app_use_hostname_as_mqtt_uuid"];
+  _cfg.app_enable_mqtt = input["app_enable_mqtt"];
+  _cfg.app_enable_ha_integration = input["app_enable_ha_integration"];
+  _cfg.app_use_hostname_as_mqtt_uuid = input["app_use_hostname_as_mqtt_uuid"];
 
-  strlcpy(_config.mqtt_server, input["mqtt_server"] | "", sizeof(_config.mqtt_server));
-  strlcpy(_config.mqtt_user, input["mqtt_user"] | "", sizeof(_config.mqtt_user));
-  strlcpy(_config.mqtt_pass, input["mqtt_pass"] | "", sizeof(_config.mqtt_pass));
-  _config.mqtt_cert = input["mqtt_cert"].as<String>();
+  strlcpy(_cfg.mqtt_server, input["mqtt_server"] | "", sizeof(_cfg.mqtt_server));
+  strlcpy(_cfg.mqtt_user, input["mqtt_user"] | "", sizeof(_cfg.mqtt_user));
+  strlcpy(_cfg.mqtt_pass, input["mqtt_pass"] | "", sizeof(_cfg.mqtt_pass));
+  _cfg.mqtt_cert = input["mqtt_cert"].as<String>();
 
   // save it to file.
   char error[128] = "Unknown";
-  if (!_config.saveConfig(error, sizeof(error)))
+  if (!_cfg.saveConfig(error, sizeof(error)))
     return generateErrorJSON(output, error);
 
   // init our mqtt
-  if (_config.app_enable_mqtt)
+  if (_cfg.app_enable_mqtt)
     _app.mqtt.setup();
   else
     _app.mqtt.disconnect();
@@ -508,16 +503,16 @@ void ProtocolController::handleSetMQTTConfig(JsonVariantConst input, JsonVariant
 
 void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output)
 {
-  _config.app_enable_serial = input["app_enable_serial"] | YB_DEFAULT_APP_ENABLE_SERIAL;
-  _config.app_enable_ota = input["app_enable_ota"] | YB_DEFAULT_APP_ENABLE_OTA;
+  _cfg.app_enable_serial = input["app_enable_serial"] | YB_DEFAULT_APP_ENABLE_SERIAL;
+  _cfg.app_enable_ota = input["app_enable_ota"] | YB_DEFAULT_APP_ENABLE_OTA;
 
   // save it to file.
   char error[128] = "Unknown";
-  if (!_config.saveConfig(error, sizeof(error)))
+  if (!_cfg.saveConfig(error, sizeof(error)))
     return generateErrorJSON(output, error);
 
   // init our ota.
-  if (_config.app_enable_ota)
+  if (_cfg.app_enable_ota)
     _app.ota.setup();
   else
     _app.ota.end();
@@ -542,11 +537,11 @@ void ProtocolController::handleSaveConfig(JsonVariantConst input, JsonVariant ou
   }
 
   // test the validity by loading it...
-  if (!_config.loadConfigFromJSON(cfg, error, sizeof(error)))
+  if (!_cfg.loadConfigFromJSON(cfg, error, sizeof(error)))
     return generateErrorJSON(output, error);
 
   // write it!
-  if (!_config.saveConfig(error, sizeof(error)))
+  if (!_cfg.saveConfig(error, sizeof(error)))
     return generateErrorJSON(output, error);
 
   // restart the board.
@@ -570,15 +565,15 @@ void ProtocolController::handleLogin(JsonVariantConst input, JsonVariant output,
 
   // check their credentials
   bool is_authenticated = false;
-  UserRole role = _config.app_default_role;
+  UserRole role = _cfg.app_default_role;
 
-  if (!strcmp(_config.admin_user, myuser) && !strcmp(_config.admin_pass, mypass)) {
+  if (!strcmp(_cfg.admin_user, myuser) && !strcmp(_cfg.admin_pass, mypass)) {
     is_authenticated = true;
     role = ADMIN;
     output["role"] = "admin";
   }
 
-  if (!strcmp(_config.guest_user, myuser) && !strcmp(_config.guest_pass, mypass)) {
+  if (!strcmp(_cfg.guest_user, myuser) && !strcmp(_cfg.guest_pass, mypass)) {
     is_authenticated = true;
     role = GUEST;
     output["role"] = "guest";
@@ -592,7 +587,7 @@ void ProtocolController::handleLogin(JsonVariantConst input, JsonVariant output,
         return generateErrorJSON(output, "Too many connections.");
     } else if (mode == YBP_MODE_SERIAL) {
       is_serial_authenticated = true;
-      _config.serial_role = role;
+      _cfg.serial_role = role;
     }
 
     output["msg"] = "login";
@@ -617,7 +612,7 @@ void ProtocolController::handleLogout(JsonVariantConst input, JsonVariant output
     _app.auth.removeClientFromAuthList(connection);
   } else if (mode == YBP_MODE_SERIAL) {
     is_serial_authenticated = false;
-    _config.serial_role = _config.app_default_role;
+    _cfg.serial_role = _cfg.app_default_role;
   }
 }
 
@@ -638,8 +633,8 @@ void ProtocolController::handleCrashMe(JsonVariantConst input, JsonVariant outpu
 void ProtocolController::handleFactoryReset(JsonVariantConst input, JsonVariant output)
 {
   // delete all our prefs
-  _config.preferences.clear();
-  _config.preferences.end();
+  _cfg.preferences.clear();
+  _cfg.preferences.end();
 
   // clean up littlefs
   LittleFS.format();
@@ -1195,7 +1190,7 @@ void ProtocolController::handleSetTheme(JsonVariantConst input, JsonVariant outp
     return generateErrorJSON(output,
       "'theme' must either be 'light' or 'dark'");
 
-  _config.app_theme = temp;
+  _cfg.app_theme = temp;
 
   sendThemeUpdate();
 }
@@ -1211,7 +1206,7 @@ void ProtocolController::handleSetBrightness(JsonVariantConst input, JsonVariant
     else if (brightness > 1)
       return generateErrorJSON(output, "Brightness must be <= 1");
 
-    _config.globalBrightness = brightness;
+    _cfg.globalBrightness = brightness;
 
 // TODO: need to put this on a time delay
 // preferences.putFloat("brightness", globalBrightness);
@@ -1485,23 +1480,23 @@ void ProtocolController::generateFullConfigMessage(JsonVariant output)
   JsonObject cfg = output["config"].to<JsonObject>();
 
   // separate call to make a clean config.
-  _config.generateFullConfig(cfg);
+  _cfg.generateFullConfig(cfg);
 }
 
 void ProtocolController::generateConfigJSON(JsonVariant output)
 {
   // extra info
   output["msg"] = "config";
-  output["hostname"] = _config.local_hostname;
-  output["use_ssl"] = _config.app_enable_ssl;
-  output["enable_ota"] = _config.app_enable_ota;
-  output["enable_mqtt"] = _config.app_enable_mqtt;
-  output["default_role"] = getRoleText(_config.app_default_role);
-  output["brightness"] = _config.globalBrightness;
+  output["hostname"] = _cfg.local_hostname;
+  output["use_ssl"] = _cfg.app_enable_ssl;
+  output["enable_ota"] = _cfg.app_enable_ota;
+  output["enable_mqtt"] = _cfg.app_enable_mqtt;
+  output["default_role"] = getRoleText(_cfg.app_default_role);
+  output["brightness"] = _cfg.globalBrightness;
   output["git_hash"] = GIT_HASH;
   output["build_time"] = BUILD_TIME;
   _app.buzzer.generateMelodyJSON(output);
-  _config.generateBoardConfig(output);
+  _cfg.generateBoardConfig(output);
 
   output["is_development"] = YB_IS_DEVELOPMENT;
 
@@ -1516,7 +1511,7 @@ void ProtocolController::generateConfigJSON(JsonVariant output)
 #endif
 
   // do we want to flag it for config?
-  if (_config.is_first_boot)
+  if (_cfg.is_first_boot)
     output["first_boot"] = true;
 }
 
@@ -1622,7 +1617,7 @@ void ProtocolController::generateStatsJSON(JsonVariant output)
 {
   // some basic statistics and info
   output["msg"] = "stats";
-  output["uuid"] = _config.uuid;
+  output["uuid"] = _cfg.uuid;
   output["received_message_total"] = totalReceivedMessages;
   output["received_message_mps"] = receivedMessagesPerSecond;
   output["sent_message_total"] = totalSentMessages;
@@ -1636,11 +1631,11 @@ void ProtocolController::generateStatsJSON(JsonVariant output)
   output["min_free_heap"] = ESP.getMinFreeHeap();
   output["max_alloc_heap"] = ESP.getMaxAllocHeap();
   output["rssi"] = WiFi.RSSI();
-  if (_config.app_enable_mqtt)
+  if (_cfg.app_enable_mqtt)
     output["mqtt_connected"] = _app.mqtt.isConnected();
 
   // what is our IP address?
-  if (!strcmp(_config.wifi_mode, "ap"))
+  if (!strcmp(_cfg.wifi_mode, "ap"))
     output["ip_address"] = _app.network.apIP;
   else
     output["ip_address"] = WiFi.localIP();
@@ -1682,14 +1677,14 @@ void ProtocolController::generateNetworkConfigMessage(JsonVariant output)
 {
   // our identifying info
   output["msg"] = "network_config";
-  _config.generateNetworkConfig(output);
+  _cfg.generateNetworkConfig(output);
 }
 
 void ProtocolController::generateAppConfigMessage(JsonVariant output)
 {
   // our identifying info
   output["msg"] = "app_config";
-  _config.generateAppConfig(output);
+  _cfg.generateAppConfig(output);
 }
 
 void ProtocolController::generateOTAProgressUpdateJSON(JsonVariant output, float progress)
@@ -1728,7 +1723,7 @@ void ProtocolController::sendThemeUpdate()
 {
   JsonDocument output;
   output["msg"] = "set_theme";
-  output["theme"] = _config.app_theme;
+  output["theme"] = _cfg.app_theme;
 
   // dynamically allocate our buffer
   size_t jsonSize = measureJson(output);
@@ -1749,7 +1744,7 @@ void ProtocolController::sendBrightnessUpdate()
 {
   JsonDocument output;
   output["msg"] = "set_brightness";
-  output["brightness"] = _config.globalBrightness;
+  output["brightness"] = _cfg.globalBrightness;
 
   // dynamically allocate our buffer
   size_t jsonSize = measureJson(output);
@@ -1851,6 +1846,6 @@ void ProtocolController::sendToAll(const char* jsonString, UserRole auth_level)
 {
   _app.http.sendToAllWebsockets(jsonString, auth_level);
 
-  if (_config.app_enable_serial && _config.serial_role >= auth_level)
+  if (_cfg.app_enable_serial && _cfg.serial_role >= auth_level)
     Serial.println(jsonString);
 }

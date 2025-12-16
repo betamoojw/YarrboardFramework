@@ -16,7 +16,7 @@
 YarrboardApp::YarrboardApp() : config(*this),
                                network(*this),
                                http(*this),
-                               protocol(*this, config),
+                               protocol(*this),
                                auth(*this),
                                mqtt(*this),
                                ota(*this),
