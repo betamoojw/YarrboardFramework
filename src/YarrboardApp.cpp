@@ -14,7 +14,7 @@
 #include "YarrboardDebug.h"
 
 YarrboardApp::YarrboardApp() : config(*this),
-                               network(*this, config),
+                               network(*this),
                                http(*this),
                                protocol(*this, config),
                                auth(*this),

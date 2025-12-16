@@ -10,6 +10,7 @@
 #define YARR_NETWORK_H
 
 #include "YarrboardConfig.h"
+#include "controllers/BaseController.h"
 #include <DNSServer.h>
 #include <ESPmDNS.h>
 #include <ImprovWiFiBLE.h>
@@ -19,13 +20,12 @@
 class YarrboardApp;
 class ConfigManager;
 
-class NetworkController
+class NetworkController : public BaseController
 {
   public:
-    NetworkController(YarrboardApp& app, ConfigManager& config);
+    NetworkController(YarrboardApp& app);
 
-    void setup();
-    void loop();
+    bool setup() override;
 
     void setupImprov();
 
@@ -36,8 +36,6 @@ class NetworkController
     IPAddress apIP;
 
   private:
-    YarrboardApp& _app;
-    ConfigManager& _config;
     ImprovWiFi improvSerial;
     ImprovWiFiBLE improvBLE;
 

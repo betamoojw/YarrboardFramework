@@ -6,7 +6,7 @@
   License: GPLv3
 */
 
-#include "NetworkController.h"
+#include "controllers/NetworkController.h"
 #include "ConfigManager.h"
 #include "RGBController.h"
 #include "YarrboardApp.h"
@@ -14,53 +14,50 @@
 
 NetworkController* NetworkController::_instance = nullptr;
 
-NetworkController::NetworkController(YarrboardApp& app, ConfigManager& config) : _app(app),
-                                                                                 _config(config),
-                                                                                 improvSerial(&Serial),
-                                                                                 apIP(8, 8, 4, 4)
+NetworkController::NetworkController(YarrboardApp& app) : BaseController(app, "network"),
+                                                          improvSerial(&Serial),
+                                                          apIP(8, 8, 4, 4)
 {
 }
 
-void NetworkController::setup()
+bool NetworkController::setup()
 {
 
   _instance = this; // Capture the instance for callbacks
 
   uint64_t chipid = ESP.getEfuseMac(); // unique 48-bit MAC base ID
-  snprintf(_config.uuid, sizeof(_config.uuid), "%04X%08lX", (uint16_t)(chipid >> 32), (uint32_t)chipid);
+  snprintf(_cfg.uuid, sizeof(_cfg.uuid), "%04X%08lX", (uint16_t)(chipid >> 32), (uint32_t)chipid);
 
-  if (_config.is_first_boot)
+  if (_cfg.is_first_boot)
     setupImprov();
   else
     setupWifi();
-}
 
-void NetworkController::loop()
-{
+  return true;
 }
 
 void NetworkController::setupWifi()
 {
   // which mode do we want?
-  if (!strcmp(_config.wifi_mode, "client")) {
+  if (!strcmp(_cfg.wifi_mode, "client")) {
     YBP.print("Client mode: ");
-    YBP.print(_config.wifi_ssid);
+    YBP.print(_cfg.wifi_ssid);
     YBP.print(" / ");
-    YBP.println(_config.wifi_pass);
+    YBP.println(_cfg.wifi_pass);
 
     // try and connect
-    if (connectToWifi(_config.wifi_ssid, _config.wifi_pass))
+    if (connectToWifi(_cfg.wifi_ssid, _cfg.wifi_pass))
       startServices();
   }
   // default to AP mode.
   else {
     YBP.print("AP mode: ");
-    YBP.print(_config.wifi_ssid);
+    YBP.print(_cfg.wifi_ssid);
     YBP.print(" / ");
-    YBP.println(_config.wifi_pass);
+    YBP.println(_cfg.wifi_pass);
 
     WiFi.mode(WIFI_AP);
-    WiFi.softAP(_config.wifi_ssid, _config.wifi_pass);
+    WiFi.softAP(_cfg.wifi_ssid, _cfg.wifi_pass);
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
 
     YBP.print("AP IP address: ");
@@ -135,14 +132,14 @@ bool NetworkController::connectToWifi(const char* ssid, const char* pass)
 void NetworkController::startServices()
 {
   // some global config
-  WiFi.setHostname(_config.local_hostname);
+  WiFi.setHostname(_cfg.local_hostname);
 
   YBP.print("Hostname: ");
-  YBP.print(_config.local_hostname);
+  YBP.print(_cfg.local_hostname);
   YBP.println(".local");
 
   // setup our local name.
-  if (!MDNS.begin(_config.local_hostname))
+  if (!MDNS.begin(_cfg.local_hostname))
     YBP.println("Error starting mDNS");
   MDNS.addService("http", "tcp", 80);
 }
@@ -152,7 +149,7 @@ void NetworkController::setupImprov()
   YBP.println("First Boot: starting Improv");
 
   String device_url = "http://";
-  device_url.concat(_config.local_hostname);
+  device_url.concat(_cfg.local_hostname);
   device_url.concat(".local");
 
   WiFi.mode(WIFI_STA);
@@ -160,9 +157,9 @@ void NetworkController::setupImprov()
 
   // Serial Configuration
   improvSerial.setDeviceInfo(ImprovTypes::ChipFamily::CF_ESP32,
-    _config.board_name,
+    _cfg.board_name,
     YB_FIRMWARE_VERSION,
-    _config.board_name,
+    _cfg.board_name,
     device_url.c_str());
 
   improvSerial.onImprovError(_onImprovErrorStatic);
@@ -171,9 +168,9 @@ void NetworkController::setupImprov()
 
   // Bluetooth Configuration
   improvBLE.setDeviceInfo(ImprovTypes::ChipFamily::CF_ESP32,
-    _config.board_name,
+    _cfg.board_name,
     YB_FIRMWARE_VERSION,
-    _config.board_name,
+    _cfg.board_name,
     device_url.c_str());
 
   improvBLE.onImprovError(_onImprovErrorStatic);
@@ -181,7 +178,7 @@ void NetworkController::setupImprov()
   improvBLE.onImprovConnected(_onImprovConnectedStatic);
 
   // wait for improv to complete
-  while (_config.is_first_boot)
+  while (_cfg.is_first_boot)
     improvSerial.handleSerial();
 }
 
@@ -222,11 +219,11 @@ void NetworkController::_handleImprovConnected(const char* ssid, const char* pas
 {
   YBP.printf("Improv Successful: %s / %s\n", ssid, password);
 
-  strncpy(_config.wifi_mode, "client", sizeof(_config.wifi_mode));
-  strncpy(_config.wifi_ssid, ssid, sizeof(_config.wifi_ssid));
-  strncpy(_config.wifi_pass, password, sizeof(_config.wifi_pass));
+  strncpy(_cfg.wifi_mode, "client", sizeof(_cfg.wifi_mode));
+  strncpy(_cfg.wifi_ssid, ssid, sizeof(_cfg.wifi_ssid));
+  strncpy(_cfg.wifi_pass, password, sizeof(_cfg.wifi_pass));
 
   char error[128];
-  _config.saveConfig(error, sizeof(error));
-  _config.is_first_boot = false;
+  _cfg.saveConfig(error, sizeof(error));
+  _cfg.is_first_boot = false;
 }
