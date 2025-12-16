@@ -27,10 +27,10 @@ bool HTTPController::setup()
   if (_cfg.app_enable_ssl && _cfg.server_cert.length() && _cfg.server_key.length()) {
     server = new PsychicHttpsServer(443);
     server->setCertificate(_cfg.server_cert.c_str(), _cfg.server_key.c_str());
-    YBP.println("SSL enabled");
+    // YBP.println("SSL enabled");
   } else {
     server = new PsychicHttpServer(80);
-    YBP.println("SSL disabled");
+    // YBP.println("SSL disabled");
   }
 
   server->config.max_open_sockets = YB_CLIENT_LIMIT;
@@ -137,7 +137,7 @@ bool HTTPController::setup()
   websocketHandler.onClose([this](PsychicWebSocketClient* client) {
     // YBP.printf("[socket] connection #%u closed from %s\n", client->socket(),
     //               client->remoteIP().toString());
-    _app.auth.removeClientFromAuthList(client);
+    _app.auth.removeClientFromAuthList(client->socket());
     websocketClientCount--;
   });
   server->on("/ws", &websocketHandler);

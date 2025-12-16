@@ -22,14 +22,14 @@ bool AuthController::setup()
   return true;
 }
 
-bool AuthController::logClientIn(PsychicWebSocketClient* client, UserRole role)
+bool AuthController::logClientIn(int socket, UserRole role)
 {
   // did we not find a spot?
-  if (!addClientToAuthList(client, role)) {
+  if (!addClientToAuthList(socket, role)) {
     YBP.println("Error: could not add to auth list.");
 
     // i'm pretty sure this closes our connection
-    close(client->socket());
+    close(socket);
 
     return false;
   }
@@ -37,11 +37,11 @@ bool AuthController::logClientIn(PsychicWebSocketClient* client, UserRole role)
   return true;
 }
 
-bool AuthController::isLoggedIn(JsonVariantConst input, byte mode, PsychicWebSocketClient* connection)
+bool AuthController::isLoggedIn(JsonVariantConst input, byte mode, int socket)
 {
   // login only required for websockets.
   if (mode == YBP_MODE_WEBSOCKET)
-    return isWebsocketClientLoggedIn(input, connection);
+    return isWebsocketClientLoggedIn(input, socket);
   else if (mode == YBP_MODE_HTTP)
     return isApiClientLoggedIn(input);
   else if (mode == YBP_MODE_SERIAL)
@@ -50,11 +50,11 @@ bool AuthController::isLoggedIn(JsonVariantConst input, byte mode, PsychicWebSoc
     return false;
 }
 
-UserRole AuthController::getUserRole(JsonVariantConst input, byte mode, PsychicWebSocketClient* connection)
+UserRole AuthController::getUserRole(JsonVariantConst input, byte mode, int socket)
 {
   // login only required for websockets.
   if (mode == YBP_MODE_WEBSOCKET)
-    return getWebsocketRole(input, connection);
+    return getWebsocketRole(input, socket);
   else if (mode == YBP_MODE_HTTP)
     return _cfg.api_role;
   else if (mode == YBP_MODE_SERIAL)
@@ -63,21 +63,21 @@ UserRole AuthController::getUserRole(JsonVariantConst input, byte mode, PsychicW
     return _cfg.app_default_role;
 }
 
-bool AuthController::isWebsocketClientLoggedIn(JsonVariantConst doc, PsychicWebSocketClient* client)
+bool AuthController::isWebsocketClientLoggedIn(JsonVariantConst doc, int socket)
 {
   // are they in our auth array?
   for (auto& authClient : authenticatedClients)
-    if (authClient.socket == client->socket())
+    if (authClient.socket == socket)
       return true;
 
   return false;
 }
 
-UserRole AuthController::getWebsocketRole(JsonVariantConst doc, PsychicWebSocketClient* client)
+UserRole AuthController::getWebsocketRole(JsonVariantConst doc, int socket)
 {
   // are they in our auth array?
   for (auto& authClient : authenticatedClients)
-    if (authClient.socket == client->socket())
+    if (authClient.socket == socket)
       return authClient.role;
 
   return _cfg.app_default_role;
@@ -125,11 +125,11 @@ bool AuthController::isApiClientLoggedIn(JsonVariantConst doc)
   return checkLoginCredentials(doc, _cfg.api_role);
 }
 
-bool AuthController::addClientToAuthList(PsychicWebSocketClient* client, UserRole role)
+bool AuthController::addClientToAuthList(int socket, UserRole role)
 {
   // check if already authenticated
   for (auto& authClient : authenticatedClients) {
-    if (authClient.socket == client->socket()) {
+    if (authClient.socket == socket) {
       // update role just in case
       authClient.role = role;
       return true;
@@ -143,14 +143,14 @@ bool AuthController::addClientToAuthList(PsychicWebSocketClient* client, UserRol
   }
 
   // add new client
-  authenticatedClients.push_back({client->socket(), role});
+  authenticatedClients.push_back({socket, role});
   return true;
 }
 
-void AuthController::removeClientFromAuthList(PsychicWebSocketClient* client)
+void AuthController::removeClientFromAuthList(int socket)
 {
   for (auto it = authenticatedClients.begin(); it != authenticatedClients.end(); ++it) {
-    if (it->socket == client->socket()) {
+    if (it->socket == socket) {
       authenticatedClients.erase(it);
       break;
     }

@@ -12,7 +12,7 @@
 #include "YarrboardConfig.h"
 #include "controllers/BaseController.h"
 #include <Arduino.h>
-#include <PsychicHttp.h>
+#include <ArduinoJson.h>
 #include <WiFi.h>
 #include <etl/vector.h>
 
@@ -39,18 +39,18 @@ class AuthController : public BaseController
 
     bool setup() override;
 
-    UserRole getUserRole(JsonVariantConst input, byte mode, PsychicWebSocketClient* connection);
-    bool logClientIn(PsychicWebSocketClient* connection, UserRole role);
-    bool isLoggedIn(JsonVariantConst input, byte mode, PsychicWebSocketClient* connection);
-    void removeClientFromAuthList(PsychicWebSocketClient* connection);
+    UserRole getUserRole(JsonVariantConst input, byte mode, int socket);
+    bool logClientIn(int socket, UserRole role);
+    bool isLoggedIn(JsonVariantConst input, byte mode, int socket);
+    void removeClientFromAuthList(int socket);
     bool isApiClientLoggedIn(JsonVariantConst doc);
 
   private:
-    bool addClientToAuthList(PsychicWebSocketClient* connection, UserRole role);
-    bool isWebsocketClientLoggedIn(JsonVariantConst input, PsychicWebSocketClient* connection);
+    bool addClientToAuthList(int socket, UserRole role);
+    bool isWebsocketClientLoggedIn(JsonVariantConst input, int socket);
     bool isSerialClientLoggedIn(JsonVariantConst input);
     bool checkLoginCredentials(JsonVariantConst doc, UserRole& role);
-    UserRole getWebsocketRole(JsonVariantConst doc, PsychicWebSocketClient* connection);
+    UserRole getWebsocketRole(JsonVariantConst doc, int socket);
 };
 
 #endif /* !YARR_AUTH_H */

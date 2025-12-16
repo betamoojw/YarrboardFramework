@@ -6,8 +6,6 @@
     * html/logo.png -> overrides framework.html
     * html/css/* -> gets added to the framework css includes
     * html/js/* -> gets added to the framework js includes
-* BaseControllers refactor
-  * refactor the rest of the controllers
 * copy the ChannelRegistry style from JS and port to c++
   * might make more sense to implement it as ChannelController
   * move channel headers/classes to a channels/ folder
@@ -34,5 +32,4 @@
 * figure out how to manage BaseChannel mqtt calls -> really dont want to have to pass config + app details to them.
 * figure out how to properly handle USB_CDC mode to avoid double prints.
 * firmware_manifest_url needs to be configurable and passed to the UI as part of the config.
-* refactor authenticatedClients into an etl container
 * refactor auth to take socket ids and delete the PsychicHttp dependency

@@ -152,7 +152,7 @@ void YarrboardApp::loop()
   }
 
   // our debug.
-  it.print(5000);
+  // it.print(5000);
 
   // if (INTERVAL(1000))
   //   DUMP(millis());
