@@ -7,8 +7,8 @@
 */
 
 #include "channels/BaseChannel.h"
-#include "MQTTController.h"
 #include "YarrboardDebug.h"
+#include "controllers/MQTTController.h"
 
 void BaseChannel::init(uint8_t id)
 {

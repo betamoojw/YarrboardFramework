@@ -6,7 +6,7 @@
   License: GPLv3
 */
 
-#include "MQTTController.h"
+#include "controllers/MQTTController.h"
 #include "ConfigManager.h"
 #include "YarrboardDebug.h"
 
@@ -36,30 +36,29 @@
 
 MQTTController* MQTTController::_instance = nullptr;
 
-MQTTController::MQTTController(YarrboardApp& app, ConfigManager& config) : _app(app),
-                                                                           _config(config)
+MQTTController::MQTTController(YarrboardApp& app) : BaseController(app, "mqtt")
 {
 }
 
-void MQTTController::setup()
+bool MQTTController::setup()
 {
   _instance = this; // Capture the instance for callbacks
 
   // are we enabled?
-  if (!_config.app_enable_mqtt)
-    return;
+  if (!_cfg.app_enable_mqtt)
+    return true;
 
-  mqttClient.setServer(_config.mqtt_server);
-  mqttClient.setCredentials(_config.mqtt_user, _config.mqtt_pass);
+  mqttClient.setServer(_cfg.mqtt_server);
+  mqttClient.setCredentials(_cfg.mqtt_user, _cfg.mqtt_pass);
 
-  if (_config.mqtt_cert.length())
-    mqttClient.setCACert(_config.mqtt_cert.c_str());
+  if (_cfg.mqtt_cert.length())
+    mqttClient.setCACert(_cfg.mqtt_cert.c_str());
 
   // on connect home hook
   mqttClient.onConnect(_onConnectStatic);
 
   // home assistant connection discovery hook.
-  if (_config.app_enable_ha_integration) {
+  if (_cfg.app_enable_ha_integration) {
     mqttClient.onTopic("homeassistant/status", 0, [&](const char* topic, const char* payload, int retain, int qos, bool dup) {
       if (!strcmp(payload, "online"))
         haDiscovery();
@@ -78,9 +77,11 @@ void MQTTController::setup()
 
     if (tries > 20) {
       YBP.println("MQTT failed to connect.");
-      return;
+      return false;
     }
   }
+
+  return true;
 }
 
 void MQTTController::loop()
@@ -122,7 +123,7 @@ void MQTTController::loop()
 #endif
 
       // separately update our Home Assistant status
-      if (_config.app_enable_ha_integration) {
+      if (_cfg.app_enable_ha_integration) {
 #ifdef YB_HAS_PWM_CHANNELS
         ha_update_channels(pwm_channels);
 #endif
@@ -162,7 +163,7 @@ void MQTTController::publish(const char* topic, const char* payload, bool use_pr
   // prefix it with yarrboard or nah?
   if (use_prefix) {
     char mqtt_path[256];
-    sprintf(mqtt_path, "yarrboard/%s/%s", _config.local_hostname, topic);
+    sprintf(mqtt_path, "yarrboard/%s/%s", _cfg.local_hostname, topic);
     ret = mqttClient.publish(mqtt_path, 0, 0, payload, strlen(payload), false);
     if (ret == -1)
       YBP.printf("[mqtt] Error publishing prefix path %s\n", mqtt_path);
@@ -190,12 +191,12 @@ void MQTTController::onConnect(bool sessionPresent)
 {
   YBP.println("Connected to MQTT.");
 
-  if (_config.app_enable_ha_integration)
+  if (_cfg.app_enable_ha_integration)
     haDiscovery();
 
   // look for json messages on this path...
   char mqtt_path[128];
-  sprintf(mqtt_path, "yarrboard/%s/command", _config.local_hostname);
+  sprintf(mqtt_path, "yarrboard/%s/command", _cfg.local_hostname);
   mqttClient.onTopic(mqtt_path, 0, _receiveMessageStatic);
 }
 
@@ -213,10 +214,10 @@ void MQTTController::haDiscovery()
 
   // how to structure our id?
   char ha_dev_uuid[128];
-  if (_config.app_use_hostname_as_mqtt_uuid)
-    sprintf(ha_dev_uuid, "yarrboard_%s", _config.local_hostname);
+  if (_cfg.app_use_hostname_as_mqtt_uuid)
+    sprintf(ha_dev_uuid, "yarrboard_%s", _cfg.local_hostname);
   else
-    sprintf(ha_dev_uuid, "yarrboard_%s", _config.uuid);
+    sprintf(ha_dev_uuid, "yarrboard_%s", _cfg.uuid);
 
   char topic[128];
   sprintf(topic, "homeassistant/device/%s/config", ha_dev_uuid);
@@ -225,13 +226,13 @@ void MQTTController::haDiscovery()
   JsonDocument doc;
   JsonObject device = doc["dev"].to<JsonObject>();
   device["ids"] = ha_dev_uuid;
-  device["name"] = _config.board_name;
+  device["name"] = _cfg.board_name;
   device["mf"] = YB_MANUFACTURER;
   device["mdl"] = YB_HARDWARE_VERSION;
   device["sw"] = YB_FIRMWARE_VERSION;
-  device["sn"] = _config.uuid;
+  device["sn"] = _cfg.uuid;
   char config_url[128];
-  sprintf(config_url, "http://%s.local", _config.local_hostname);
+  sprintf(config_url, "http://%s.local", _cfg.local_hostname);
   device["configuration_url"] = config_url;
 
   // our origin to let HA know where it came from.

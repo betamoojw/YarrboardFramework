@@ -15,7 +15,6 @@
 
 #include "ConfigManager.h"
 #include "IntervalTimer.h"
-#include "MQTTController.h"
 #include "NTPController.h"
 #include "NetworkController.h"
 #include "OTAController.h"
@@ -27,6 +26,7 @@
 #include "controllers/BaseController.h"
 #include "controllers/BuzzerController.h"
 #include "controllers/HTTPController.h"
+#include "controllers/MQTTController.h"
 
 #include <cstring>         // For strcmp
 #include <etl/algorithm.h> // For finding/removing

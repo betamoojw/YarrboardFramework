@@ -10,26 +10,25 @@
 #define YARR_MQTT_H
 
 #include "YarrboardConfig.h"
+#include "controllers/BaseController.h"
 #include <ArduinoJson.h>
 #include <PsychicMqttClient.h>
 
 class YarrboardApp;
 class ConfigManager;
 
-class MQTTController
+class MQTTController : public BaseController
 {
   public:
-    MQTTController(YarrboardApp& app, ConfigManager& config);
+    MQTTController(YarrboardApp& app);
 
-    void setup();
-    void loop();
+    bool setup() override;
+    void loop() override;
+
     void disconnect();
     bool isConnected();
 
   private:
-    YarrboardApp& _app;
-    ConfigManager& _config;
-
     PsychicMqttClient mqttClient;
     unsigned long previousMQTTMillis = 0;
 
