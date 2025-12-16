@@ -6,39 +6,53 @@
   License: GPLv3
 */
 
-#include "rgb.h"
+#include "RGBController.h"
+#include "ConfigManager.h"
 
 #ifdef YB_HAS_STATUS_RGB
-
 CRGB _leds[YB_STATUS_RGB_COUNT];
+#endif
 
-void rgb_setup()
+RGBController::RGBController(YarrboardApp& app, ConfigManager& config) : _app(app),
+                                                                         _config(config)
 {
+}
+
+void RGBController::setup()
+{
+#ifdef YB_HAS_STATUS_RGB
   FastLED.addLeds<YB_STATUS_RGB_TYPE, YB_STATUS_RGB_PIN, YB_STATUS_RGB_ORDER>(_leds, YB_STATUS_RGB_COUNT);
   FastLED.setBrightness(32);
   FastLED.clear();
   rgb_set_status_color(CRGB::Blue);
   FastLED.show();
+#endif
 }
 
-unsigned long lastRGBUpdateMillis = 0;
-
-void rgb_loop()
+void RGBController::loop()
 {
+#ifdef YB_HAS_STATUS_RGB
   // 10hz refresh
   if (millis() - lastRGBUpdateMillis > 100) {
     FastLED.show();
     lastRGBUpdateMillis = millis();
   }
+#endif
 }
 
-void rgb_set_status_color(uint8_t r, uint8_t g, uint8_t b)
+void RGBController::setStatusColor(uint8_t r, uint8_t g, uint8_t b)
 {
-  rgb_set_pixel_color(0, r, g, b);
+  setPixelColor(0, r, g, b);
 }
 
-void rgb_set_pixel_color(uint8_t c, uint8_t r, uint8_t g, uint8_t b)
+void RGBController::setStatusColor(const CRGB& color)
 {
+  setPixelColor(0, color);
+}
+
+void RGBController::setPixelColor(uint8_t c, uint8_t r, uint8_t g, uint8_t b)
+{
+#ifdef YB_HAS_STATUS_RGB
   // out of bounds?
   if (c >= YB_STATUS_RGB_COUNT)
     return;
@@ -49,21 +63,17 @@ void rgb_set_pixel_color(uint8_t c, uint8_t r, uint8_t g, uint8_t b)
     FastLED.show();
     lastRGBUpdateMillis = millis();
   }
+#endif
 }
 
-void rgb_set_status_color(const CRGB& color)
+void RGBController::setPixelColor(uint8_t c, const CRGB& color)
 {
-  rgb_set_pixel_color(0, color);
-}
-
-void rgb_set_pixel_color(uint8_t c, const CRGB& color)
-{
+#ifdef YB_HAS_STATUS_RGB
   _leds[c] = color;
 
   if (millis() - lastRGBUpdateMillis > 100) {
     FastLED.show();
     lastRGBUpdateMillis = millis();
   }
-}
-
 #endif
+}

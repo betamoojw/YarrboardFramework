@@ -8,9 +8,9 @@
 
 #include "NetworkController.h"
 #include "ConfigManager.h"
+#include "RGBController.h"
 #include "YarrboardApp.h"
 #include "YarrboardDebug.h"
-#include "rgb.h"
 
 NetworkController* NetworkController::_instance = nullptr;
 
@@ -74,9 +74,7 @@ void NetworkController::setupWifi()
 
 bool NetworkController::connectToWifi(const char* ssid, const char* pass)
 {
-#ifdef YB_HAS_STATUS_RGB
-  rgb_set_status_color(CRGB::Yellow);
-#endif
+  _app.rgb.setStatusColor(CRGB::Yellow);
 
   // reset our wifi to a clean state
   if (WiFi.isConnected()) {
@@ -107,9 +105,9 @@ bool NetworkController::connectToWifi(const char* ssid, const char* pass)
       YBP.println("\n[WiFi] WiFi is connected!");
       YBP.print("[WiFi] IP address: ");
       YBP.println(WiFi.localIP());
-#ifdef YB_HAS_STATUS_RGB
-      rgb_set_status_color(CRGB::Green);
-#endif
+
+      _app.rgb.setStatusColor(CRGB::Green);
+
       return true;
     }
 
@@ -129,9 +127,7 @@ bool NetworkController::connectToWifi(const char* ssid, const char* pass)
   YBP.println("\n[WiFi] WiFi failed to connect");
   WiFi.disconnect(true, true);
 
-#ifdef YB_HAS_STATUS_RGB
-  rgb_set_status_color(CRGB::Red);
-#endif
+  _app.rgb.setStatusColor(CRGB::Red);
 
   return false;
 }
@@ -219,9 +215,7 @@ void NetworkController::_handleImprovError(ImprovTypes::Error err)
 {
   YBP.printf("wifi error: %d\n", err);
 
-#ifdef YB_HAS_STATUS_RGB
-  rgb_set_status_color(CRGB::Red);
-#endif
+  _app.rgb.setStatusColor(CRGB::Red);
 }
 
 void NetworkController::_handleImprovConnected(const char* ssid, const char* password)
