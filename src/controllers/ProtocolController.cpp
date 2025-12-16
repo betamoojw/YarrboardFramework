@@ -44,6 +44,9 @@ ProtocolController::ProtocolController(YarrboardApp& app) : BaseController(app, 
 
 bool ProtocolController::setup()
 {
+  registerCommand(NOBODY, "ping", &ProtocolController::handlePing);
+  registerCommand(ADMIN, "set_config", &ProtocolController::handleSetGeneralConfig);
+
   // send serial a config off the bat
   if (_cfg.app_enable_serial) {
     JsonDocument output;
@@ -80,6 +83,27 @@ void ProtocolController::loop()
     if (Serial.available() > 0)
       handleSerialJson();
   }
+}
+
+bool ProtocolController::registerCommand(UserRole role, const char* command, ProtocolMessageHandler handler)
+{
+  if (commandMap.full()) {
+    YBP.println("Error: Protocol command list is full.");
+    return false;
+  }
+
+  commandMap[command] = {role, handler};
+  return true;
+}
+
+bool ProtocolController::unregisterCommand(const char* command)
+{
+  return commandMap.erase(command) > 0;
+}
+
+bool ProtocolController::hasCommand(const char* command)
+{
+  return commandMap.find(command) != commandMap.end();
 }
 
 void ProtocolController::incrementSentMessages()
@@ -121,6 +145,24 @@ void ProtocolController::handleSerialJson()
   }
 }
 
+// Returns true if 'userRole' is sufficient to execute a command requiring 'requiredRole'
+bool ProtocolController::hasPermission(UserRole requiredRole, UserRole userRole)
+{
+  // 1. ADMIN can do everything
+  if (userRole == ADMIN)
+    return true;
+
+  // 2. GUEST can handle GUEST or NOBODY
+  if (userRole == GUEST && (requiredRole == GUEST || requiredRole == NOBODY))
+    return true;
+
+  // 3. NOBODY can only handle NOBODY
+  if (userRole == NOBODY && requiredRole == NOBODY)
+    return true;
+
+  return false;
+}
+
 void ProtocolController::handleReceivedJSON(JsonVariantConst input, JsonVariant output, YBMode mode,
   PsychicWebSocketClient* connection)
 {
@@ -145,11 +187,31 @@ void ProtocolController::handleReceivedJSON(JsonVariantConst input, JsonVariant 
   // what would you say you do around here?
   UserRole role = _app.auth.getUserRole(input, mode, connection->socket());
 
+  // Try to find the command in the new map system
+  auto it = commandMap.find(cmd);
+
+  // If FOUND, process it here and return.
+  // If NOT found, skip this block and let the legacy code handle it.
+  if (it != commandMap.end()) {
+
+    // We found the command, so we must enforce auth.
+    // Do NOT fall through if unauthorized.
+    if (!hasPermission(it->second.role, role)) {
+      return generateErrorJSON(output, "Unauthorized.");
+    }
+
+    // Execute Handler
+    if (it->second.handler) {
+      it->second.handler(input, output);
+      return;
+    }
+  }
+
   // only pages with no login requirements
   if (!strcmp(cmd, "login"))
     return handleLogin(input, output, mode, connection);
-  else if (!strcmp(cmd, "ping"))
-    return generatePongJSON(output);
+  // else if (!strcmp(cmd, "ping"))
+  //   return handlePing(input, output);
   else if (!strcmp(cmd, "hello"))
     return generateHelloJSON(output, role);
 
@@ -548,8 +610,7 @@ void ProtocolController::handleSaveConfig(JsonVariantConst input, JsonVariant ou
   ESP.restart();
 }
 
-void ProtocolController::handleLogin(JsonVariantConst input, JsonVariant output, YBMode mode,
-  PsychicWebSocketClient* connection)
+void ProtocolController::handleLogin(JsonVariantConst input, JsonVariant output, YBMode mode, PsychicWebSocketClient* connection)
 {
   if (!input["user"].is<String>())
     return generateErrorJSON(output, "'user' is a required parameter");
@@ -1717,7 +1778,10 @@ void ProtocolController::generateLoginRequiredJSON(JsonVariant output)
   generateErrorJSON(output, "You must be logged in.");
 }
 
-void ProtocolController::generatePongJSON(JsonVariant output) { output["pong"] = millis(); }
+void ProtocolController::handlePing(JsonVariantConst input, JsonVariant output)
+{
+  output["pong"] = millis();
+}
 
 void ProtocolController::sendThemeUpdate()
 {

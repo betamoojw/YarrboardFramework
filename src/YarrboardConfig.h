@@ -134,9 +134,11 @@
 #define YB_VALIDATE_FIRMWARE_SIGNATURE true
 #define YB_BOARD_CONFIG_PATH           "/yarrboard.json"
 
-typedef enum { YBP_MODE_WEBSOCKET,
+typedef enum {
+  YBP_MODE_WEBSOCKET,
   YBP_MODE_HTTP,
-  YBP_MODE_SERIAL } YBMode;
+  YBP_MODE_SERIAL
+} YBMode;
 
 #ifndef GIT_HASH
   #define GIT_HASH "???"
@@ -165,6 +167,10 @@ typedef enum { YBP_MODE_WEBSOCKET,
 
 #ifndef YB_MAX_CONTROLLERS
   #define YB_MAX_CONTROLLERS 30
+#endif
+
+#ifndef YB_PROTOCOL_MAX_COMMANDS
+  #define YB_PROTOCOL_MAX_COMMANDS 50
 #endif
 
 #endif // YARR_CONFIG_H

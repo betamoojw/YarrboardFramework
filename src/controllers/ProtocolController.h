@@ -16,8 +16,9 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <PsychicHttp.h>
-#include <stdarg.h>
-#include <stdio.h>
+#include <cstring>
+#include <etl/map.h>
+#include <functional>
 
 #ifdef YB_HAS_FANS
   #include "fans.h"
@@ -34,6 +35,10 @@
 class YarrboardApp;
 class ConfigManager;
 
+// message handler callback definition
+// void(JsonVariantConst input, JsonVariant output)
+using ProtocolMessageHandler = std::function<void(JsonVariantConst, JsonVariant)>;
+
 class ProtocolController : public BaseController
 {
   public:
@@ -42,6 +47,30 @@ class ProtocolController : public BaseController
     bool setup() override;
     void loop() override;
 
+    bool unregisterCommand(const char* command);
+    bool hasCommand(const char* command);
+
+    // Overload 1: Free Functions, Static Functions, Lambdas
+    // Accepts any callable that matches the signature
+    bool registerCommand(UserRole role, const char* command, ProtocolMessageHandler handler);
+
+    // Overload 2: Member Function Helper
+    // Allows clean syntax: registerCommand(..., &Class::Method);
+    // This accepts ANY class method (T::*method).
+    // It wraps it in a lambda and delegates to the core function above.
+    template <typename T>
+    bool registerCommand(UserRole role, const char* command, void (T::*method)(JsonVariantConst, JsonVariant))
+    {
+      // We cast 'this' to T* to ensure type safety if T is a base class
+      T* instance = static_cast<T*>(this);
+
+      // Delegate to the non-template function
+      return registerCommand(role, command, [instance, method](JsonVariantConst in, JsonVariant out) {
+        (instance->*method)(in, out);
+      });
+    }
+
+    bool hasPermission(UserRole requiredRole, UserRole userRole);
     const char* getRoleText(UserRole role);
     bool isSerialAuthenticated();
 
@@ -69,6 +98,26 @@ class ProtocolController : public BaseController
     unsigned int sentMessagesPerSecond = 0;
     unsigned long totalSentMessages = 0;
 
+    // -------------------------------------------------------------------------
+    // Dynamic command handler registry
+    // -------------------------------------------------------------------------
+    struct CommandEntry {
+        UserRole role;
+        ProtocolMessageHandler handler;
+    };
+
+    // 2. Define a Custom Comparator
+    // This tells the Map to compare the TEXT, not the memory addresses.
+    struct StringCompare {
+        bool operator()(const char* lhs, const char* rhs) const
+        {
+          return strcmp(lhs, rhs) < 0;
+        }
+    };
+
+    // 3. The Map now uses const char* and our custom comparator
+    etl::map<const char*, CommandEntry, YB_PROTOCOL_MAX_COMMANDS, StringCompare> commandMap;
+
     void handleSerialJson();
 
     void handleSetGeneralConfig(JsonVariantConst input, JsonVariant output);
@@ -78,7 +127,7 @@ class ProtocolController : public BaseController
     void handleSetMQTTConfig(JsonVariantConst input, JsonVariant output);
     void handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output);
     void handleSaveConfig(JsonVariantConst input, JsonVariant output);
-    void handleLogin(JsonVariantConst input, JsonVariant output, YBMode mode, PsychicWebSocketClient* connection = NULL);
+    void handleLogin(JsonVariantConst input, JsonVariant output, YBMode mode, PsychicWebSocketClient* connection);
     void handleLogout(JsonVariantConst input, JsonVariant output, YBMode mode, PsychicWebSocketClient* connection = NULL);
     void handleRestart(JsonVariantConst input, JsonVariant output);
     void handleCrashMe(JsonVariantConst input, JsonVariant output);
@@ -129,7 +178,7 @@ class ProtocolController : public BaseController
     void generateOTAProgressFinishedJSON(JsonVariant output);
     void generateLoginRequiredJSON(JsonVariant output);
     void generateInvalidChannelJSON(JsonVariant output, byte cid);
-    void generatePongJSON(JsonVariant output);
+    void handlePing(JsonVariantConst input, JsonVariant output);
 };
 
 #endif /* !YARR_PROTOCOL_H */

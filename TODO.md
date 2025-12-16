@@ -6,6 +6,7 @@
     * html/logo.png -> overrides framework.html
     * html/css/* -> gets added to the framework css includes
     * html/js/* -> gets added to the framework js includes
+
 * protocol hooks
   * registerCommand(role, "command", callback);
   * onGenerateUpdate(callback) - generate update json
