@@ -24,17 +24,19 @@ class ChannelController : public BaseController
   public:
     ChannelController(YarrboardApp& app, const char* name) : BaseController(app, name) {}
 
-    bool loadConfigHook(JsonVariant config) override
+    bool loadConfigHook(JsonVariant config, char* error, size_t len) override
     {
       // did we get a config entry?
       if (config[_name]) {
-        // populate our exact channel count
-        for (byte i = 0; i < N; i++) {
-          channels[i].init(i + 1); // load default values per channel.  channels are 1 indexed for humans.
+
+        // init everything with defaults
+        byte i = 0;
+        for (auto& ch : _channels) {
+          ch.init(i + 1);
         }
 
         // now iterate over our initialized channels
-        for (auto& ch : channels) {
+        for (auto& ch : _channels) {
           bool found = false;
 
           // loop over our json config to see if we find a match
@@ -46,7 +48,7 @@ class ChannelController : public BaseController
               // did we get a non-empty key?
               const char* val = ch_config["key"].as<const char*>();
               if (val && *val) {
-                for (auto& test_ch : channels) {
+                for (auto& test_ch : _channels) {
                   // did we find any with a different id?
                   if (!strcmp(val, test_ch.key) && ch.id != test_ch.id) {
                     snprintf(error, len, "%s channel #%d - duplicate key: %d/%s", _name, ch.id, test_ch.id, val);
@@ -64,19 +66,19 @@ class ChannelController : public BaseController
           }
 
           if (!found) {
-            snprintf(error, len, "Missing 'board.%s' #%d config", channel_key, ch.id);
+            snprintf(error, len, "Missing 'board.%s' #%d config", _name, ch.id);
             return false;
           }
         }
       } else {
-        snprintf(error, len, "Missing 'board.%s' config", channel_key);
+        snprintf(error, len, "Missing 'board.%s' config", _name);
         return false;
       }
 
       return true;
     };
 
-    void generateConfigHook(JsonVariant config) override
+    void generateConfigHook(JsonVariant output) override
     {
       JsonArray channels = output[_name].to<JsonArray>();
       for (auto& ch : _channels) {

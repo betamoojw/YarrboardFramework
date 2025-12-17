@@ -102,6 +102,10 @@ void BaseChannel::generateUpdate(JsonVariant config)
   config["key"] = this->key;
 }
 
+void BaseChannel::generateStats(JsonVariant config)
+{
+}
+
 void BaseChannel::mqttUpdate()
 {
   // JsonDocument output;

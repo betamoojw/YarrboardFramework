@@ -23,6 +23,7 @@ class BaseChannel
     bool haEnabled = false;
     char name[YB_CHANNEL_NAME_LENGTH];
     char key[YB_CHANNEL_KEY_LENGTH];
+    volatile bool sendFastUpdate = false;
 
     void setup();
 

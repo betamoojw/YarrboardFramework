@@ -10,8 +10,8 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 
-#ifndef YARR_CONFIG_H
-#define YARR_CONFIG_H
+#ifndef YB_FRAMEWORK_CONFIG_H
+#define YB_FRAMEWORK_CONFIG_H
 
 // basic board defines.
 #ifndef YB_BOARD_NAME
@@ -133,12 +133,6 @@
 #define YB_UUID_LENGTH                 17
 #define YB_VALIDATE_FIRMWARE_SIGNATURE true
 #define YB_BOARD_CONFIG_PATH           "/yarrboard.json"
-
-typedef enum {
-  YBP_MODE_WEBSOCKET,
-  YBP_MODE_HTTP,
-  YBP_MODE_SERIAL
-} YBMode;
 
 #ifndef GIT_HASH
   #define GIT_HASH "???"

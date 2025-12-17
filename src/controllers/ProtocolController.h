@@ -32,6 +32,12 @@
   #include "brineomatic.h"
 #endif
 
+typedef enum {
+  YBP_MODE_WEBSOCKET,
+  YBP_MODE_HTTP,
+  YBP_MODE_SERIAL
+} YBMode;
+
 class YarrboardApp;
 class ConfigManager;
 

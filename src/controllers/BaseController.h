@@ -25,7 +25,7 @@ class BaseController
     virtual void loop() {}
     const char* getName() { return _name; }
 
-    virtual bool loadConfigHook(JsonVariant config) { return true; };
+    virtual bool loadConfigHook(JsonVariant config, char* error, size_t len) { return true; };
     virtual void generateConfigHook(JsonVariant config) {};
     virtual void generateUpdateHook(JsonVariant output) {};
     virtual void generateFastUpdateHook(JsonVariant output) {};

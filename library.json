@@ -36,12 +36,47 @@
       "owner": "hoeken",
       "name": "PsychicHttp",
       "version": "^2.1.1"
+    },
+    {
+      "owner": "elims",
+      "name": "PsychicMqttClient",
+      "version": "*"
+    },
+    {
+      "owner": "fastled",
+      "name": "FastLED",
+      "version": "*"
+    },
+    {
+      "owner": "etlcpp",
+      "name": "Embedded Template Library",
+      "version": "*"
+    },
+    {
+      "owner": "chrisjoyce911",
+      "name": "esp32FOTA",
+      "version": "*"
+    },
+    {
+      "owner": "h2zero",
+      "name": "NimBLE-Arduino",
+      "version": "*"
+    },
+    {
+      "name": "Improv-WiFi-Library",
+      "version": "https://github.com/hoeken/Improv-WiFi-Library.git"
+    },
+    {
+      "name": "ArduinoTrace",
+      "version": "https://github.com/hoeken/ArduinoTrace.git"
     }
   ],
   "export": {
     "include": [
       "examples/platformio",
-      "src",W
+      "src",
+      "html",
+      "scripts",
       "library.json",
       "library.properties",
       "LICENSE",
