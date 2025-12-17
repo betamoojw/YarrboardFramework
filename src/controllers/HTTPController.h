@@ -23,10 +23,6 @@
 // #include "index.html.gz.h"
 // #include "logo.png.gz.h"
 
-#ifdef YB_HAS_FANS
-  #include "fans.h"
-#endif
-
 typedef struct {
     int socket;
     char* buffer;

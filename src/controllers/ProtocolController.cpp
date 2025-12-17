@@ -87,12 +87,6 @@ void ProtocolController::loop()
   // lookup our info periodically
   unsigned int messageDelta = millis() - previousMessageMillis;
   if (messageDelta >= 1000) {
-// TODO: move this to pwm loop
-#ifdef YB_HAS_PWM_CHANNELS
-    // update our averages, etc.
-    for (auto& ch : pwm_channels)
-      ch.calculateAverages(messageDelta);
-#endif
 
     // for keeping track.
     receivedMessagesPerSecond = receivedMessages;
@@ -1545,12 +1539,6 @@ void ProtocolController::generateStatsJSON(JsonVariant output)
     jo["soft_fuse_trip_count"] =
       ch.softFuseTripCount;
   }
-#endif
-
-#ifdef YB_HAS_FANS
-  // info about each of our fans
-  for (byte i = 0; i < YB_FAN_COUNT; i++)
-    output["fans"][i]["rpm"] = fans_last_rpm[i];
 #endif
 
 #ifdef YB_IS_BRINEOMATIC

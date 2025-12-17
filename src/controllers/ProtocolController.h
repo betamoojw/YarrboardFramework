@@ -20,14 +20,6 @@
 #include <etl/map.h>
 #include <functional>
 
-#ifdef YB_HAS_FANS
-  #include "fans.h"
-#endif
-
-#ifdef YB_IS_BRINEOMATIC
-  #include "brineomatic.h"
-#endif
-
 typedef enum {
   YBP_MODE_WEBSOCKET,
   YBP_MODE_HTTP,
