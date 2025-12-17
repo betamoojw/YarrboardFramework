@@ -50,7 +50,6 @@ class BuzzerController : public BaseController
     friend void BuzzerTask(void* pv);
 
   private:
-#ifdef YB_HAS_PIEZO
     // --- DECLARATIONS ONLY (No assignments here) ---
 
     // our global note buffer
@@ -63,14 +62,12 @@ class BuzzerController : public BaseController
     static size_t g_len;
     static portMUX_TYPE g_mux;
 
-  #ifdef YB_PIEZO_ACTIVE
+#ifdef YB_PIEZO_ACTIVE
     bool piezoIsActive = true;
-  #elif defined(YB_PIEZO_PASSIVE)
+#elif defined(YB_PIEZO_PASSIVE)
     bool piezoIsActive = false;
-  #else
+#else
     bool piezoIsActive = false;
-  #endif
-
 #endif
 
     void playMelody(const Note* seq, size_t len);

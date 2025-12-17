@@ -1,5 +1,8 @@
 ## v1.0.0 Release
 
+* convert buzzer away from #defines to runtime config
+* convert piezo away from #defines to runtime config
+
 * convert frothfet
 * convert brineomatic
 
