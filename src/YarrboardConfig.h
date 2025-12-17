@@ -35,19 +35,6 @@
   // time before saving fade pwm to preserve flash
   #define YB_DUTY_SAVE_TIMEOUT 5000
 
-  // if we have a status led, default it to one.
-  #ifdef YB_HAS_STATUS_RGB
-    #ifndef YB_STATUS_RGB_COUNT
-      #define YB_STATUS_RGB_COUNT 1
-    #endif
-    #ifndef YB_STATUS_RGB_TYPE
-      #define YB_STATUS_RGB_TYPE WS2812B
-    #endif
-    #ifndef YB_STATUS_RGB_ORDER
-      #define YB_STATUS_RGB_ORDER GRB
-    #endif
-  #endif
-
   // default to 400khz
   #ifndef YB_I2C_SPEED
     #define YB_I2C_SPEED 400000

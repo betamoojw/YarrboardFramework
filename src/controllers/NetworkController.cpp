@@ -10,7 +10,6 @@
 #include "ConfigManager.h"
 #include "YarrboardApp.h"
 #include "YarrboardDebug.h"
-#include "controllers/RGBController.h"
 
 NetworkController* NetworkController::_instance = nullptr;
 
@@ -71,7 +70,7 @@ void NetworkController::setupWifi()
 
 bool NetworkController::connectToWifi(const char* ssid, const char* pass)
 {
-  _app.rgb.setStatusColor(CRGB::Yellow);
+  _app.setStatusColor(CRGB::Yellow);
 
   // reset our wifi to a clean state
   if (WiFi.isConnected()) {
@@ -103,7 +102,7 @@ bool NetworkController::connectToWifi(const char* ssid, const char* pass)
       YBP.print("[WiFi] IP address: ");
       YBP.println(WiFi.localIP());
 
-      _app.rgb.setStatusColor(CRGB::Green);
+      _app.setStatusColor(CRGB::Green);
 
       return true;
     }
@@ -124,7 +123,7 @@ bool NetworkController::connectToWifi(const char* ssid, const char* pass)
   YBP.println("\n[WiFi] WiFi failed to connect");
   WiFi.disconnect(true, true);
 
-  _app.rgb.setStatusColor(CRGB::Red);
+  _app.setStatusColor(CRGB::Red);
 
   return false;
 }
@@ -212,7 +211,7 @@ void NetworkController::_handleImprovError(ImprovTypes::Error err)
 {
   YBP.printf("wifi error: %d\n", err);
 
-  _app.rgb.setStatusColor(CRGB::Red);
+  _app.setStatusColor(CRGB::Red);
 }
 
 void NetworkController::_handleImprovConnected(const char* ssid, const char* password)

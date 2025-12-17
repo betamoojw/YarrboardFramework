@@ -20,14 +20,12 @@ YarrboardApp::YarrboardApp() : config(*this),
                                auth(*this),
                                mqtt(*this),
                                ota(*this),
-                               rgb(*this),
                                ntp(*this),
                                networkLogger(protocol),
                                loopSpeed(100, 1000),
                                framerateAvg(10, 10000)
 
 {
-  registerController(rgb);
   registerController(network);
   registerController(ntp);
   registerController(http);
@@ -183,4 +181,18 @@ bool YarrboardApp::removeController(const char* name)
     }
   }
   return false;
+}
+
+void YarrboardApp::setStatusColor(uint8_t r, uint8_t g, uint8_t b)
+{
+  RGBControllerInterface* rgb = (RGBControllerInterface*)getController("rgb");
+  if (rgb)
+    rgb->setStatusColor(r, g, b);
+}
+
+void YarrboardApp::setStatusColor(const CRGB& color)
+{
+  RGBControllerInterface* rgb = (RGBControllerInterface*)getController("rgb");
+  if (rgb)
+    rgb->setStatusColor(color);
 }

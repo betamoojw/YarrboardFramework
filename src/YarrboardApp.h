@@ -41,7 +41,6 @@ class YarrboardApp
     AuthController auth;
     MQTTController mqtt;
     OTAController ota;
-    RGBController rgb;
     NTPController ntp;
 
     const char* board_name = "Yarrboard";
@@ -94,6 +93,9 @@ class YarrboardApp
 
     ConfigManager& getConfig() { return config; }
     const ConfigManager& getConfig() const { return config; }
+
+    void setStatusColor(uint8_t r, uint8_t g, uint8_t b);
+    void setStatusColor(const CRGB& color);
 
   private:
     WebsocketPrint networkLogger;

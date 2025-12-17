@@ -701,8 +701,6 @@ void BuzzerController::generateMelodyJSON(JsonVariant output)
 
 bool BuzzerController::playMelodyByName(const char* melody)
 {
-  DUMP(melody);
-
   if (!strcmp(melody, "NONE"))
     return true;
 
