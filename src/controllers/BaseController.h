@@ -29,6 +29,7 @@ class BaseController
     virtual bool loadConfigHook(JsonVariant config, char* error, size_t len) { return true; };
     virtual void generateConfigHook(JsonVariant config) {};
     virtual void generateUpdateHook(JsonVariant output) {};
+    virtual bool needsFastUpdate() { return false; }
     virtual void generateFastUpdateHook(JsonVariant output) {};
     virtual void generateStatsHook(JsonVariant output) {};
     virtual void mqttUpdateHook(MQTTController* mqtt) {};

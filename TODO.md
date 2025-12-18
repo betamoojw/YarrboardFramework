@@ -1,8 +1,6 @@
 ## v1.0.0 Release
 
 * test that dns and stuff works after improv
-* we need some way to indicate that a fast update is needed. (copy from pwm)
-* clean up auth a bit -> protocol auth handlers shouldnt deal with auth logic
 
 * fix our CI hookss
 * copy the release.yml from psychic

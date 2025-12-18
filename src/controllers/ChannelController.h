@@ -104,6 +104,15 @@ class ChannelController : public BaseController
       }
     }
 
+    bool needsFastUpdate()
+    {
+      for (auto& ch : _channels) {
+        if (ch.sendFastUpdate)
+          return true;
+      }
+      return false;
+    }
+
     void generateFastUpdateHook(JsonVariant output) override
     {
       JsonArray channels = output[_name].to<JsonArray>();

@@ -61,6 +61,18 @@ void ProtocolController::loop()
     previousMessageMillis = millis();
   }
 
+  // check to see if we need to send one.
+  bool doFastUpdate = false;
+  for (auto& c : _app.getControllers()) {
+    if (c->needsFastUpdate()) {
+      doFastUpdate = true;
+      break;
+    }
+  }
+
+  if (doFastUpdate)
+    sendFastUpdate();
+
   // any serial port customers?
   if (_cfg.app_enable_serial) {
     if (Serial.available() > 0)
