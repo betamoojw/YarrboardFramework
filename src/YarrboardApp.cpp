@@ -174,3 +174,10 @@ void YarrboardApp::setStatusColor(const CRGB& color)
   if (rgb)
     rgb->setStatusColor(color);
 }
+
+void YarrboardApp::playMelody(const char* melody)
+{
+  BuzzerController* buzzer = (BuzzerController*)getController("buzzer");
+  if (buzzer)
+    buzzer->playMelodyByName(melody);
+}

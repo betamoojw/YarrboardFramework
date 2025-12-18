@@ -25,6 +25,11 @@ class ChannelController : public BaseController
   public:
     ChannelController(YarrboardApp& app, const char* name) : BaseController(app, name) {}
 
+    etl::array<ChannelType, COUNT>& getChannels()
+    {
+      return _channels;
+    }
+
     bool loadConfigHook(JsonVariant config, char* error, size_t len) override
     {
       // init everything with defaults

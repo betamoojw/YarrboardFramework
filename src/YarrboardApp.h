@@ -19,6 +19,7 @@
 #include "YarrboardDebug.h"
 #include "controllers/AuthController.h"
 #include "controllers/BaseController.h"
+#include "controllers/BuzzerController.h"
 #include "controllers/HTTPController.h"
 #include "controllers/MQTTController.h"
 #include "controllers/NTPController.h"
@@ -97,6 +98,8 @@ class YarrboardApp
 
     void setStatusColor(uint8_t r, uint8_t g, uint8_t b);
     void setStatusColor(const CRGB& color);
+
+    void playMelody(const char* melody);
 
   private:
     WebsocketPrint networkLogger;
