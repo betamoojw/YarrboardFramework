@@ -90,7 +90,6 @@ class ProtocolController : public BaseController
         ProtocolMessageHandler handler;
     };
 
-    // 2. Define a Custom Comparator
     // This tells the Map to compare the TEXT, not the memory addresses.
     struct StringCompare {
         bool operator()(const char* lhs, const char* rhs) const
@@ -99,11 +98,16 @@ class ProtocolController : public BaseController
         }
     };
 
-    // 3. The Map now uses const char* and our custom comparator
+    // Command map - list of allowed commands, required role, and their callbacks
     etl::map<const char*, CommandEntry, YB_PROTOCOL_MAX_COMMANDS, StringCompare> commandMap;
 
     void handleSerialJson();
 
+    void handleHello(JsonVariantConst input, JsonVariant output, UserRole role);
+    void handleLogin(JsonVariantConst input, JsonVariant output, YBMode mode, PsychicWebSocketClient* connection);
+    void handleLogout(JsonVariantConst input, JsonVariant output, YBMode mode, PsychicWebSocketClient* connection = NULL);
+
+    void handlePing(JsonVariantConst input, JsonVariant output);
     void handleGetConfig(JsonVariantConst input, JsonVariant output);
     void handleGetStats(JsonVariantConst input, JsonVariant output);
     void handleGetUpdate(JsonVariantConst input, JsonVariant output);
@@ -117,8 +121,6 @@ class ProtocolController : public BaseController
     void handleSetMQTTConfig(JsonVariantConst input, JsonVariant output);
     void handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output);
     void handleSaveConfig(JsonVariantConst input, JsonVariant output);
-    void handleLogin(JsonVariantConst input, JsonVariant output, YBMode mode, PsychicWebSocketClient* connection);
-    void handleLogout(JsonVariantConst input, JsonVariant output, YBMode mode, PsychicWebSocketClient* connection = NULL);
     void handleRestart(JsonVariantConst input, JsonVariant output);
     void handleCrashMe(JsonVariantConst input, JsonVariant output);
     void handleFactoryReset(JsonVariantConst input, JsonVariant output);
@@ -126,19 +128,7 @@ class ProtocolController : public BaseController
     void handleSetTheme(JsonVariantConst input, JsonVariant output);
     void handleSetBrightness(JsonVariantConst input, JsonVariant output);
 
-    void generateHelloJSON(JsonVariant output, UserRole role);
-    void generateUpdateJSON(JsonVariant output);
-    void generateFastUpdateJSON(JsonVariant output);
-    void generateConfigJSON(JsonVariant output);
-    void generateStatsJSON(JsonVariant output);
-    void generateFullConfigMessage(JsonVariant output);
-    void generateNetworkConfigMessage(JsonVariant output);
-    void generateAppConfigMessage(JsonVariant output);
-    void generateOTAProgressUpdateJSON(JsonVariant output, float progress);
-    void generateOTAProgressFinishedJSON(JsonVariant output);
-    void generateLoginRequiredJSON(JsonVariant output);
-    void generateInvalidChannelJSON(JsonVariant output, byte cid);
-    void handlePing(JsonVariantConst input, JsonVariant output);
+    void generateConfigMessage(JsonVariant output);
 };
 
 #endif /* !YARR_PROTOCOL_H */

@@ -182,7 +182,7 @@ void ProtocolController::handleReceivedJSON(JsonVariantConst input, JsonVariant 
     return handleLogin(input, output, mode, connection);
   // hello is also a tricky one since we need to let them know their role.
   else if (!strcmp(cmd, "hello"))
-    return generateHelloJSON(output, role);
+    return handleHello(input, output, role);
   // logout is another special case.
   else if (!strcmp(cmd, "logout"))
     return handleLogout(input, output, mode, connection);
@@ -192,7 +192,7 @@ void ProtocolController::handleReceivedJSON(JsonVariantConst input, JsonVariant 
   return generateErrorJSON(output, error.c_str());
 }
 
-void ProtocolController::generateHelloJSON(JsonVariant output, UserRole role)
+void ProtocolController::handleHello(JsonVariantConst input, JsonVariant output, UserRole role)
 {
   output["msg"] = "hello";
   output["role"] = _app.auth.getRoleText(role);
@@ -204,32 +204,71 @@ void ProtocolController::generateHelloJSON(JsonVariant output, UserRole role)
 
 void ProtocolController::handleGetConfig(JsonVariantConst input, JsonVariant output)
 {
-  generateConfigJSON(output);
+  generateConfigMessage(output);
 }
 
 void ProtocolController::handleGetStats(JsonVariantConst input, JsonVariant output)
 {
-  generateStatsJSON(output);
+  // some basic statistics and info
+  output["msg"] = "stats";
+  output["uuid"] = _cfg.uuid;
+  output["received_message_total"] = totalReceivedMessages;
+  output["received_message_mps"] = receivedMessagesPerSecond;
+  output["sent_message_total"] = totalSentMessages;
+  output["sent_message_mps"] = sentMessagesPerSecond;
+  output["websocket_client_count"] = _app.http.websocketClientCount;
+  output["http_client_count"] = _app.http.httpClientCount - _app.http.websocketClientCount;
+  output["fps"] = (int)_app.framerate;
+  output["uptime"] = esp_timer_get_time();
+  output["heap_size"] = ESP.getHeapSize();
+  output["free_heap"] = ESP.getFreeHeap();
+  output["min_free_heap"] = ESP.getMinFreeHeap();
+  output["max_alloc_heap"] = ESP.getMaxAllocHeap();
+  output["rssi"] = WiFi.RSSI();
+  if (_cfg.app_enable_mqtt)
+    output["mqtt_connected"] = _app.mqtt.isConnected();
+
+  // what is our IP address?
+  if (!strcmp(_cfg.wifi_mode, "ap"))
+    output["ip_address"] = _app.network.apIP;
+  else
+    output["ip_address"] = WiFi.localIP();
+
+  for (auto& c : _app.getControllers()) {
+    c->generateStatsHook(output);
+  }
 }
 
 void ProtocolController::handleGetUpdate(JsonVariantConst input, JsonVariant output)
 {
-  generateUpdateJSON(output);
+  output["msg"] = "update";
+  output["uptime"] = esp_timer_get_time();
+
+  for (auto& c : _app.getControllers()) {
+    c->generateUpdateHook(output);
+  }
 }
 
 void ProtocolController::handleGetFullConfig(JsonVariantConst input, JsonVariant output)
 {
-  generateFullConfigMessage(output);
+  // build our message
+  output["msg"] = "full_config";
+  JsonObject cfg = output["config"].to<JsonObject>();
+
+  // separate call to make a clean config.
+  _cfg.generateFullConfig(cfg);
 }
 
 void ProtocolController::handleGetNetworkConfig(JsonVariantConst input, JsonVariant output)
 {
-  generateNetworkConfigMessage(output);
+  output["msg"] = "network_config";
+  _cfg.generateNetworkConfig(output);
 }
 
 void ProtocolController::handleGetAppConfig(JsonVariantConst input, JsonVariant output)
 {
-  generateAppConfigMessage(output);
+  output["msg"] = "app_config";
+  _cfg.generateAppConfig(output);
 }
 
 void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVariant output)
@@ -254,7 +293,7 @@ void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVari
     return generateErrorJSON(output, error);
 
   // give them the updated config
-  generateConfigJSON(output);
+  generateConfigMessage(output);
 }
 
 void ProtocolController::handleSetNetworkConfig(JsonVariantConst input, JsonVariant output)
@@ -638,17 +677,7 @@ void ProtocolController::handleSetBrightness(JsonVariantConst input, JsonVariant
     return generateErrorJSON(output, "'brightness' is a required parameter.");
 }
 
-void ProtocolController::generateFullConfigMessage(JsonVariant output)
-{
-  // build our message
-  output["msg"] = "full_config";
-  JsonObject cfg = output["config"].to<JsonObject>();
-
-  // separate call to make a clean config.
-  _cfg.generateFullConfig(cfg);
-}
-
-void ProtocolController::generateConfigJSON(JsonVariant output)
+void ProtocolController::generateConfigMessage(JsonVariant output)
 {
   // extra info
   output["msg"] = "config";
@@ -677,84 +706,6 @@ void ProtocolController::generateConfigJSON(JsonVariant output)
     output["first_boot"] = true;
 }
 
-void ProtocolController::generateUpdateJSON(JsonVariant output)
-{
-  output["msg"] = "update";
-  output["uptime"] = esp_timer_get_time();
-
-  for (auto& c : _app.getControllers()) {
-    c->generateUpdateHook(output);
-  }
-}
-
-void ProtocolController::generateFastUpdateJSON(JsonVariant output)
-{
-  output["msg"] = "update";
-  output["fast"] = 1;
-  output["uptime"] = esp_timer_get_time();
-
-  for (auto& c : _app.getControllers()) {
-    c->generateFastUpdateHook(output);
-  }
-}
-
-void ProtocolController::generateStatsJSON(JsonVariant output)
-{
-  // some basic statistics and info
-  output["msg"] = "stats";
-  output["uuid"] = _cfg.uuid;
-  output["received_message_total"] = totalReceivedMessages;
-  output["received_message_mps"] = receivedMessagesPerSecond;
-  output["sent_message_total"] = totalSentMessages;
-  output["sent_message_mps"] = sentMessagesPerSecond;
-  output["websocket_client_count"] = _app.http.websocketClientCount;
-  output["http_client_count"] = _app.http.httpClientCount - _app.http.websocketClientCount;
-  output["fps"] = (int)_app.framerate;
-  output["uptime"] = esp_timer_get_time();
-  output["heap_size"] = ESP.getHeapSize();
-  output["free_heap"] = ESP.getFreeHeap();
-  output["min_free_heap"] = ESP.getMinFreeHeap();
-  output["max_alloc_heap"] = ESP.getMaxAllocHeap();
-  output["rssi"] = WiFi.RSSI();
-  if (_cfg.app_enable_mqtt)
-    output["mqtt_connected"] = _app.mqtt.isConnected();
-
-  // what is our IP address?
-  if (!strcmp(_cfg.wifi_mode, "ap"))
-    output["ip_address"] = _app.network.apIP;
-  else
-    output["ip_address"] = WiFi.localIP();
-
-  for (auto& c : _app.getControllers()) {
-    c->generateStatsHook(output);
-  }
-}
-
-void ProtocolController::generateNetworkConfigMessage(JsonVariant output)
-{
-  // our identifying info
-  output["msg"] = "network_config";
-  _cfg.generateNetworkConfig(output);
-}
-
-void ProtocolController::generateAppConfigMessage(JsonVariant output)
-{
-  // our identifying info
-  output["msg"] = "app_config";
-  _cfg.generateAppConfig(output);
-}
-
-void ProtocolController::generateOTAProgressUpdateJSON(JsonVariant output, float progress)
-{
-  output["msg"] = "ota_progress";
-  output["progress"] = round2(progress);
-}
-
-void ProtocolController::generateOTAProgressFinishedJSON(JsonVariant output)
-{
-  output["msg"] = "ota_finished";
-}
-
 void ProtocolController::generateErrorJSON(JsonVariant output, const char* error)
 {
   output["msg"] = "status";
@@ -767,11 +718,6 @@ void ProtocolController::generateSuccessJSON(JsonVariant output, const char* suc
   output["msg"] = "status";
   output["status"] = "success";
   output["message"] = success;
-}
-
-void ProtocolController::generateLoginRequiredJSON(JsonVariant output)
-{
-  generateErrorJSON(output, "You must be logged in.");
 }
 
 void ProtocolController::handlePing(JsonVariantConst input, JsonVariant output)
@@ -824,7 +770,14 @@ void ProtocolController::sendBrightnessUpdate()
 void ProtocolController::sendFastUpdate()
 {
   JsonDocument output;
-  generateFastUpdateJSON(output);
+
+  output["msg"] = "update";
+  output["fast"] = 1;
+  output["uptime"] = esp_timer_get_time();
+
+  for (auto& c : _app.getControllers()) {
+    c->generateFastUpdateHook(output);
+  }
 
   // dynamically allocate our buffer
   size_t jsonSize = measureJson(output);
@@ -844,7 +797,8 @@ void ProtocolController::sendFastUpdate()
 void ProtocolController::sendOTAProgressUpdate(float progress)
 {
   JsonDocument output;
-  generateOTAProgressUpdateJSON(output, progress);
+  output["msg"] = "ota_progress";
+  output["progress"] = round2(progress);
 
   // dynamically allocate our buffer
   size_t jsonSize = measureJson(output);
@@ -864,7 +818,7 @@ void ProtocolController::sendOTAProgressUpdate(float progress)
 void ProtocolController::sendOTAProgressFinished()
 {
   JsonDocument output;
-  generateOTAProgressFinishedJSON(output);
+  output["msg"] = "ota_finished";
 
   // dynamically allocate our buffer
   size_t jsonSize = measureJson(output);

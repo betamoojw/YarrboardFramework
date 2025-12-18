@@ -4,9 +4,6 @@
   * move all the mqtt stuff to ChannelController
   * move all the templated calls from BaseChannel to ChannelController
 
-* general clean up of the protocol class
-  * combine generateFoo into their handlers if not used elsewhere
-
 * global brightness -> needs a controller hook
   * implement hook on rgb
   * implement hook on pwm
@@ -16,7 +13,10 @@
 * we need some way to indicate that a fast update is needed.
 * clean up auth a bit -> protocol auth handlers shouldnt deal with auth logic
 
-* fix our CI hooks
+* fix our CI hookss
+* copy the release.yml from psychic
+* setup module on arduino
+* setup module on platformio
 
 ## Long Term
 
