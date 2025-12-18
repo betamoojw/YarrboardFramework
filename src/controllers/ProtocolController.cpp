@@ -672,6 +672,9 @@ void ProtocolController::handleSetBrightness(JsonVariantConst input, JsonVariant
     // TODO: need to put this on a time delay
     // preferences.putFloat("brightness", globalBrightness);
 
+    for (auto& c : _app.getControllers()) {
+      c->updateBrightnessHook(brightness);
+    }
     sendBrightnessUpdate();
   } else
     return generateErrorJSON(output, "'brightness' is a required parameter.");

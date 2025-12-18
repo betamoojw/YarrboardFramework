@@ -1,9 +1,6 @@
 ## v1.0.0 Release
 
-* global brightness -> needs a controller hook
-  * implement hook on rgb
-  * implement hook on pwm
-  * sendFoo functions -> consolidate the serialization boilerplate
+* protocolcontroller sendFoo functions -> consolidate the serialization boilerplate
 
 * test that dns and stuff works after improv
 * we need some way to indicate that a fast update is needed.
@@ -15,6 +12,9 @@
 * setup module on platformio
 
 ## Long Term
+
+* global brightness
+  * implement hook on pwm
 
 * modify the gulp.js script to pull from the framework lib directory
   * it should also write the files to the framework lib directory for inclusion

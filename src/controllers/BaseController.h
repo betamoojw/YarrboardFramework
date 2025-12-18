@@ -34,6 +34,7 @@ class BaseController
     virtual void mqttUpdateHook(MQTTController* mqtt) {};
     virtual void haUpdateHook(MQTTController* mqtt) {};
     virtual void haGenerateDiscoveryHook(JsonVariant components, const char* uuid, MQTTController* mqtt) {};
+    virtual void updateBrightnessHook(float brightness) {};
 
   protected:
     YarrboardApp& _app;
