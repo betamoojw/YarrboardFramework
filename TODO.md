@@ -1,6 +1,6 @@
 ## v1.0.0 Release
 
-* test that dns and stuff works after improv
+* improv wifi wont connect after first failure.
 
 * fix our CI hookss
 * copy the release.yml from psychic
@@ -8,6 +8,10 @@
 * setup module on platformio
 
 ## Long Term
+
+* we need to add an order field to controllers that determines how they loop.
+  * sort on add.
+  * mqtt needs to be last
 
 * global brightness
   * rgb controller -> setMaxBrightness()

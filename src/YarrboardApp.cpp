@@ -32,11 +32,13 @@ YarrboardApp::YarrboardApp() : config(*this),
   registerController(protocol);
   registerController(auth);
   registerController(ota);
-  registerController(mqtt);
 }
 
 void YarrboardApp::setup()
 {
+  // register this here because it should be called last.
+  registerController(mqtt);
+
   debug_setup();
 
   YBP.println("Yarrboard");
