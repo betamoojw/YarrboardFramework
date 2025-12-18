@@ -47,6 +47,8 @@ class BuzzerController : public BaseController
     bool playMelodyByName(const char* melody);
     void generateMelodyJSON(JsonVariant output);
 
+    void handlePlaySound(JsonVariantConst input, JsonVariant output);
+
     // Make the task a friend so it can access private static members
     friend void BuzzerTask(void* pv);
 

@@ -66,6 +66,7 @@ class YarrboardApp
     bool use_hostname_as_mqtt_uuid = true;
 
     UserRole default_role = NOBODY;
+    const char* default_melody = "STARTUP";
 
     YarrboardApp();
 

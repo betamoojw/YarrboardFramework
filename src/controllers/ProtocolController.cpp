@@ -10,7 +10,6 @@
 #include "ConfigManager.h"
 #include "YarrboardApp.h"
 #include "YarrboardDebug.h"
-#include "controllers/BuzzerController.h"
 #include "controllers/MQTTController.h"
 #include "controllers/OTAController.h"
 #include "utility.h"
@@ -29,7 +28,6 @@ bool ProtocolController::setup()
   registerCommand(GUEST, "set_theme", this, &ProtocolController::handleSetTheme);
   registerCommand(GUEST, "set_brightness", this, &ProtocolController::handleSetBrightness);
 
-  registerCommand(GUEST, "play_sound", this, &ProtocolController::handlePlaySound);
   registerCommand(GUEST, "set_relay_channel", this, &ProtocolController::handleSetRelayChannel);
   registerCommand(GUEST, "toggle_relay_channel", this, &ProtocolController::handleToggleRelayChannel);
   registerCommand(GUEST, "set_servo_channel", this, &ProtocolController::handleSetServoChannel);
@@ -304,7 +302,7 @@ void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVari
 
   // update variable
   strlcpy(_cfg.board_name, input["board_name"] | _app.board_name, sizeof(_cfg.board_name));
-  strlcpy(_cfg.startup_melody, input["startup_melody"] | YB_PIEZO_DEFAULT_MELODY, sizeof(_cfg.startup_melody));
+  strlcpy(_cfg.startup_melody, input["startup_melody"] | _app.default_melody, sizeof(_cfg.startup_melody));
 
   // save it to file.
   char error[128];
@@ -659,69 +657,6 @@ void ProtocolController::handleOTAStart(JsonVariantConst input, JsonVariant outp
     _app.ota.startOTA();
   else
     return generateErrorJSON(output, "Firmware already up to date.");
-}
-
-void ProtocolController::handlePlaySound(JsonVariantConst input, JsonVariant output)
-{
-#ifdef YB_HAS_PIEZO
-  // expect: "melody": "name"
-  if (input["melody"]) {
-    const char* melody = input["melody"].as<const char*>();
-    if (!melody)
-      return generateErrorJSON(output, "'melody' must be a string");
-
-    if (!strcmp(melody, "NONE"))
-      return;
-
-    if (_app.piezo.playMelodyByName(melody))
-      return;
-    else
-      return generateErrorJSON(output, "Unknown melody name");
-  }
-
-  // Expect: { "notes": [ { "freq": 440, "ms": 200 }, ... ] }
-  if (!input["notes"])
-    return generateErrorJSON(output, "Missing 'notes' array");
-
-  JsonVariantConst notesVar = input["notes"];
-  if (!notesVar.is<JsonArrayConst>())
-    return generateErrorJSON(output, "'notes' must be an array");
-
-  JsonArrayConst notes = notesVar.as<JsonArrayConst>();
-  size_t count = notes.size();
-
-  if (count == 0)
-    return generateErrorJSON(output, "'notes' array is empty");
-
-  if (count > YB_MAX_MELODY_LENGTH) {
-    char error[128];
-    snprintf(error, sizeof(error), "Max notes length of %d", YB_MAX_MELODY_LENGTH);
-    return generateErrorJSON(output, error);
-  }
-
-  // Allocate dynamic Note sequence
-  Note* seq = new Note[count];
-  size_t idx = 0;
-
-  for (JsonVariantConst nv : notes) {
-    if (!nv["ms"]) {
-      delete[] seq;
-      return generateErrorJSON(output, "Each note must contain 'ms'");
-    }
-
-    // freq is optional (default = 0 meaning rest)
-    uint16_t freq = nv["freq"] | 0;
-    uint16_t ms = nv["ms"].as<uint16_t>();
-
-    seq[idx++] = {freq, ms};
-  }
-
-  playMelody(seq, count);
-
-  delete[] seq;
-#else
-  return generateErrorJSON(output, "Piezo not supported on this board");
-#endif
 }
 
 void ProtocolController::handleConfigRelayChannel(JsonVariantConst input, JsonVariant output)

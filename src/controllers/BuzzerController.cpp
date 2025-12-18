@@ -8,7 +8,9 @@
 
 #include "controllers/BuzzerController.h"
 #include "ConfigManager.h"
+#include "YarrboardApp.h"
 #include "YarrboardDebug.h"
+#include "controllers/ProtocolController.h"
 
 // our global note buffer
 static Note g_noteBuffer[YB_MAX_MELODY_LENGTH];
@@ -657,12 +659,14 @@ BuzzerController::BuzzerController(YarrboardApp& app) : BaseController(app, "buz
 
 bool BuzzerController::setup()
 {
+  _app.protocol.registerCommand(GUEST, "play_sound", this, &BuzzerController::handlePlaySound);
+
   pinMode(buzzerPin, OUTPUT);
 
   if (!isActive) {
     // LEDC once
     if (!ledcAttach(buzzerPin, 1000, LEDC_RES_BITS)) {
-      YBP.println("Error attaching piezo to LEDC channel.");
+      YBP.println("Error attaching buzzer to LEDC channel.");
       return false;
     } else {
       isActive = false;
@@ -739,6 +743,65 @@ void BuzzerController::playMelody(const Note* seq, size_t len)
 
   if (buzzerTaskHandle)
     xTaskNotifyGive(buzzerTaskHandle); // wake the task
+}
+
+void BuzzerController::handlePlaySound(JsonVariantConst input, JsonVariant output)
+{
+  // expect: "melody": "name"
+  if (input["melody"]) {
+    const char* melody = input["melody"].as<const char*>();
+    if (!melody)
+      return _app.protocol.generateErrorJSON(output, "'melody' must be a string");
+
+    if (!strcmp(melody, "NONE"))
+      return;
+
+    if (playMelodyByName(melody))
+      return;
+    else
+      return _app.protocol.generateErrorJSON(output, "Unknown melody name");
+  }
+
+  // Expect: { "notes": [ { "freq": 440, "ms": 200 }, ... ] }
+  if (!input["notes"])
+    return _app.protocol.generateErrorJSON(output, "Missing 'notes' array");
+
+  JsonVariantConst notesVar = input["notes"];
+  if (!notesVar.is<JsonArrayConst>())
+    return _app.protocol.generateErrorJSON(output, "'notes' must be an array");
+
+  JsonArrayConst notes = notesVar.as<JsonArrayConst>();
+  size_t count = notes.size();
+
+  if (count == 0)
+    return _app.protocol.generateErrorJSON(output, "'notes' array is empty");
+
+  if (count > YB_MAX_MELODY_LENGTH) {
+    char error[128];
+    snprintf(error, sizeof(error), "Max notes length of %d", YB_MAX_MELODY_LENGTH);
+    return _app.protocol.generateErrorJSON(output, error);
+  }
+
+  // Allocate dynamic Note sequence
+  Note* seq = new Note[count];
+  size_t idx = 0;
+
+  for (JsonVariantConst nv : notes) {
+    if (!nv["ms"]) {
+      delete[] seq;
+      return _app.protocol.generateErrorJSON(output, "Each note must contain 'ms'");
+    }
+
+    // freq is optional (default = 0 meaning rest)
+    uint16_t freq = nv["freq"] | 0;
+    uint16_t ms = nv["ms"].as<uint16_t>();
+
+    seq[idx++] = {freq, ms};
+  }
+
+  playMelody(seq, count);
+
+  delete[] seq;
 }
 
 // ---------- Low-level helpers ----------

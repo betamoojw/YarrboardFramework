@@ -15,6 +15,8 @@ bool ConfigManager::setup()
   strlcpy(admin_pass, _app.default_admin_pass, sizeof(admin_pass));
   strlcpy(guest_user, _app.default_guest_user, sizeof(guest_user));
   strlcpy(guest_pass, _app.default_guest_pass, sizeof(guest_pass));
+  strlcpy(startup_melody, _app.default_melody, sizeof(startup_melody));
+
   app_update_interval = _app.update_interval;
 
   app_enable_mfd = _app.enable_mfd;
@@ -323,7 +325,7 @@ bool ConfigManager::loadAppConfigFromJSON(JsonVariant config, char* error, size_
   const char* v;
 
   // startup_melody
-  v = config["startup_melody"] | YB_PIEZO_DEFAULT_MELODY;
+  v = config["startup_melody"] | _app.default_melody;
   strlcpy(startup_melody, v, sizeof(startup_melody));
 
   // admin_user

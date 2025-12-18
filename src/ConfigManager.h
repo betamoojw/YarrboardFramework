@@ -36,7 +36,7 @@ class ConfigManager
     char uuid[YB_UUID_LENGTH];
 
     char board_name[YB_BOARD_NAME_LENGTH];
-    char startup_melody[YB_BOARD_NAME_LENGTH] = YB_PIEZO_DEFAULT_MELODY;
+    char startup_melody[YB_BOARD_NAME_LENGTH];
     char admin_user[YB_USERNAME_LENGTH];
     char admin_pass[YB_PASSWORD_LENGTH];
     char guest_user[YB_USERNAME_LENGTH];

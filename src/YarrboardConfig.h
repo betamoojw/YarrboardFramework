@@ -19,9 +19,6 @@
   #ifndef YB_IS_DEVELOPMENT
     #define YB_IS_DEVELOPMENT false
   #endif
-  #ifndef YB_PIEZO_DEFAULT_MELODY
-    #define YB_PIEZO_DEFAULT_MELODY "STARTUP"
-  #endif
   #ifndef YB_DEFAULT_AP_MODE
     #define YB_DEFAULT_AP_MODE "ap"
   #endif
