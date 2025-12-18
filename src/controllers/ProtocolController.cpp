@@ -96,7 +96,7 @@ void ProtocolController::printCommands()
 {
   YBP.println("Protocol Commands:");
   for (const auto& kvp : commandMap)
-    YBP.printf("%-6s | %s\n", getRoleText(kvp.second.role), kvp.first);
+    YBP.printf("%-6s | %s\n", _app.auth.getRoleText(kvp.second.role), kvp.first);
 }
 
 void ProtocolController::incrementSentMessages()
@@ -104,11 +104,6 @@ void ProtocolController::incrementSentMessages()
   // keep track!
   sentMessages++;
   totalSentMessages++;
-}
-
-bool ProtocolController::isSerialAuthenticated()
-{
-  return is_serial_authenticated;
 }
 
 void ProtocolController::handleSerialJson()
@@ -136,24 +131,6 @@ void ProtocolController::handleSerialJson()
       totalSentMessages++;
     }
   }
-}
-
-// Returns true if 'userRole' is sufficient to execute a command requiring 'requiredRole'
-bool ProtocolController::hasPermission(UserRole requiredRole, UserRole userRole)
-{
-  // 1. ADMIN can do everything
-  if (userRole == ADMIN)
-    return true;
-
-  // 2. GUEST can handle GUEST or NOBODY
-  if (userRole == GUEST && (requiredRole == GUEST || requiredRole == NOBODY))
-    return true;
-
-  // 3. NOBODY can only handle NOBODY
-  if (userRole == NOBODY && requiredRole == NOBODY)
-    return true;
-
-  return false;
 }
 
 void ProtocolController::handleReceivedJSON(JsonVariantConst input, JsonVariant output, YBMode mode,
@@ -189,7 +166,7 @@ void ProtocolController::handleReceivedJSON(JsonVariantConst input, JsonVariant 
 
     // We found the command, so we must enforce auth.
     // Do NOT fall through if unauthorized.
-    if (!hasPermission(it->second.role, role)) {
+    if (!_app.auth.hasPermission(it->second.role, role)) {
       return generateErrorJSON(output, "Unauthorized.");
     }
 
@@ -215,21 +192,11 @@ void ProtocolController::handleReceivedJSON(JsonVariantConst input, JsonVariant 
   return generateErrorJSON(output, error.c_str());
 }
 
-const char* ProtocolController::getRoleText(UserRole role)
-{
-  if (role == ADMIN)
-    return "admin";
-  else if (role == GUEST)
-    return "guest";
-  else
-    return "nobody";
-}
-
 void ProtocolController::generateHelloJSON(JsonVariant output, UserRole role)
 {
   output["msg"] = "hello";
-  output["role"] = getRoleText(role);
-  output["default_role"] = getRoleText(_cfg.app_default_role);
+  output["role"] = _app.auth.getRoleText(role);
+  output["default_role"] = _app.auth.getRoleText(_cfg.app_default_role);
   output["name"] = _cfg.board_name;
   output["brightness"] = _cfg.globalBrightness;
   output["firmware_version"] = _app.firmware_version;
@@ -571,12 +538,11 @@ void ProtocolController::handleLogin(JsonVariantConst input, JsonVariant output,
       if (!_app.auth.logClientIn(connection->socket(), role))
         return generateErrorJSON(output, "Too many connections.");
     } else if (mode == YBP_MODE_SERIAL) {
-      is_serial_authenticated = true;
-      _cfg.serial_role = role;
+      _app.auth.logSerialClientIn(role);
     }
 
     output["msg"] = "login";
-    output["role"] = getRoleText(role);
+    output["role"] = _app.auth.getRoleText(role);
     output["message"] = "Login successful.";
 
     return;
@@ -596,8 +562,7 @@ void ProtocolController::handleLogout(JsonVariantConst input, JsonVariant output
   if (mode == YBP_MODE_WEBSOCKET) {
     _app.auth.removeClientFromAuthList(connection->socket());
   } else if (mode == YBP_MODE_SERIAL) {
-    is_serial_authenticated = false;
-    _cfg.serial_role = _cfg.app_default_role;
+    _app.auth.logSerialClientOut();
   }
 }
 
@@ -691,7 +656,7 @@ void ProtocolController::generateConfigJSON(JsonVariant output)
   output["use_ssl"] = _cfg.app_enable_ssl;
   output["enable_ota"] = _cfg.app_enable_ota;
   output["enable_mqtt"] = _cfg.app_enable_mqtt;
-  output["default_role"] = getRoleText(_cfg.app_default_role);
+  output["default_role"] = _app.auth.getRoleText(_cfg.app_default_role);
   output["brightness"] = _cfg.globalBrightness;
   output["git_hash"] = GIT_HASH;
   output["build_time"] = BUILD_TIME;

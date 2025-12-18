@@ -59,10 +59,6 @@ class ProtocolController : public BaseController
       });
     }
 
-    bool hasPermission(UserRole requiredRole, UserRole userRole);
-    const char* getRoleText(UserRole role);
-    bool isSerialAuthenticated();
-
     void sendBrightnessUpdate();
     void sendThemeUpdate();
     void sendFastUpdate();
@@ -78,7 +74,6 @@ class ProtocolController : public BaseController
     void incrementSentMessages();
 
   private:
-    bool is_serial_authenticated = false;
     unsigned long previousMessageMillis = 0;
     unsigned int receivedMessages = 0;
     unsigned int receivedMessagesPerSecond = 0;

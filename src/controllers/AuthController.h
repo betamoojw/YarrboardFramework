@@ -40,12 +40,21 @@ class AuthController : public BaseController
     bool setup() override;
 
     UserRole getUserRole(JsonVariantConst input, byte mode, int socket);
+    const char* getRoleText(UserRole role);
+    bool hasPermission(UserRole requiredRole, UserRole userRole);
+
+    void logSerialClientIn(UserRole role);
+    void logSerialClientOut();
+    bool isSerialAuthenticated();
+
     bool logClientIn(int socket, UserRole role);
     bool isLoggedIn(JsonVariantConst input, byte mode, int socket);
     void removeClientFromAuthList(int socket);
     bool isApiClientLoggedIn(JsonVariantConst doc);
 
   private:
+    bool is_serial_authenticated = false;
+
     bool addClientToAuthList(int socket, UserRole role);
     bool isWebsocketClientLoggedIn(JsonVariantConst input, int socket);
     bool isSerialClientLoggedIn(JsonVariantConst input);

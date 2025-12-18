@@ -164,7 +164,7 @@ void ConfigManager::generateAppConfig(JsonVariant output)
 {
   // our identifying info
   output["startup_melody"] = startup_melody;
-  output["default_role"] = _app.protocol.getRoleText(app_default_role);
+  output["default_role"] = _app.auth.getRoleText(app_default_role);
   output["admin_user"] = admin_user;
   output["admin_pass"] = admin_pass;
   output["guest_user"] = guest_user;

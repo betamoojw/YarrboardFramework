@@ -37,6 +37,18 @@ bool AuthController::logClientIn(int socket, UserRole role)
   return true;
 }
 
+void AuthController::logSerialClientIn(UserRole role)
+{
+  is_serial_authenticated = true;
+  _cfg.serial_role = role;
+}
+
+void AuthController::logSerialClientOut()
+{
+  is_serial_authenticated = false;
+  _cfg.serial_role = _cfg.app_default_role;
+}
+
 bool AuthController::isLoggedIn(JsonVariantConst input, byte mode, int socket)
 {
   // login only required for websockets.
@@ -114,7 +126,7 @@ bool AuthController::checkLoginCredentials(JsonVariantConst doc, UserRole& role)
 
 bool AuthController::isSerialClientLoggedIn(JsonVariantConst doc)
 {
-  if (_app.protocol.isSerialAuthenticated())
+  if (isSerialAuthenticated())
     return true;
   else
     return checkLoginCredentials(doc, _cfg.serial_role);
@@ -155,4 +167,37 @@ void AuthController::removeClientFromAuthList(int socket)
       break;
     }
   }
+}
+
+bool AuthController::isSerialAuthenticated()
+{
+  return is_serial_authenticated;
+}
+
+// Returns true if 'userRole' is sufficient to execute a command requiring 'requiredRole'
+bool AuthController::hasPermission(UserRole requiredRole, UserRole userRole)
+{
+  // 1. ADMIN can do everything
+  if (userRole == ADMIN)
+    return true;
+
+  // 2. GUEST can handle GUEST or NOBODY
+  if (userRole == GUEST && (requiredRole == GUEST || requiredRole == NOBODY))
+    return true;
+
+  // 3. NOBODY can only handle NOBODY
+  if (userRole == NOBODY && requiredRole == NOBODY)
+    return true;
+
+  return false;
+}
+
+const char* AuthController::getRoleText(UserRole role)
+{
+  if (role == ADMIN)
+    return "admin";
+  else if (role == GUEST)
+    return "guest";
+  else
+    return "nobody";
 }

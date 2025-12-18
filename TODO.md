@@ -1,20 +1,24 @@
 ## v1.0.0 Release
 
-* move the auth stuff from protocol to auth
-* figure out how to handle the rest of the special commands
-  * login, hello, logout
-  * trace the calls -> multiple entry points?
 * figure out how to manage BaseChannel mqtt calls
   * move all the mqtt stuff to ChannelController
   * move all the templated calls from BaseChannel to ChannelController
+
 * general clean up of the protocol class
   * combine generateFoo into their handlers if not used elsewhere
-  * global brightness -> needs a controller hook
-    * implement hook on rgb
-    * implement hook on pwm
+
+* global brightness -> needs a controller hook
+  * implement hook on rgb
+  * implement hook on pwm
   * sendFoo functions -> consolidate the serialization boilerplate
+
 * test that dns and stuff works after improv
 * we need some way to indicate that a fast update is needed.
+* clean up auth a bit -> protocol auth handlers shouldnt deal with auth logic
+
+* fix our CI hooks
+
+## Long Term
 
 * modify the gulp.js script to pull from the framework lib directory
   * it should also write the files to the framework lib directory for inclusion
@@ -24,4 +28,11 @@
       * html/css/* -> gets added to the framework css includes
       * html/js/* -> gets added to the framework js includes
 
-* fix our CI hooks
+* login, hello, logout are special commands.  can we modify this?
+  * probably too much work for now.  implementing a queue similar to websockets would be the best way.
+  * i guess there's a chance of collisions if there are http requests and websockets happening together.
+  * command entry flow:
+    * SERIAL: ProtocolController::loop -> serial -> handleReceivedJSON
+    * WEBSOCKET: HTTPController::loop -> handleWebsocketMessageLoop -> handleReceivedJSON
+    * HTTP API: esp-idf HTTP thread -> handleWebServerRequest -> handleReceivedJSON
+    * MQTT: not implemented
