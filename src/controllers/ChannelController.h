@@ -95,6 +95,29 @@ class ChannelController : public BaseController
       }
     };
 
+    void handleConfigCommand(JsonVariantConst input, JsonVariant output)
+    {
+      char error[128];
+
+      // load our channel
+      auto* ch = lookupChannel(input, output);
+      if (!ch)
+        return;
+
+      if (!input["config"].is<JsonObjectConst>()) {
+        snprintf(error, sizeof(error), "'config' is required parameter");
+        return _app.protocol.generateErrorJSON(output, error);
+      }
+
+      if (!ch->loadConfig(input["config"], error, sizeof(error))) {
+        return _app.protocol.generateErrorJSON(output, error);
+      }
+
+      // write it to file
+      if (!_app.config.saveConfig(error, sizeof(error)))
+        return _app.protocol.generateErrorJSON(output, error);
+    }
+
     void generateUpdateHook(JsonVariant output) override
     {
       JsonArray channels = output[_name].to<JsonArray>();
