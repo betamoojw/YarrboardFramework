@@ -2,26 +2,41 @@
 #pragma once
 #include "YarrboardDebug.h"
 #include <Arduino.h>
-#include <ArduinoJson.h>
 #include <cstring>
 #include <stdint.h>
 #include <vector>
 
 /**
  * IntervalTimer
- *  - Call start() once to set the initial timestamp.
- *  - Wrap code blocks with time("label") to record the elapsed microseconds since the last mark.
- *  - Call print(interval_ms) repeatedly; it prints only when interval_ms has elapsed since the last print.
+ * * A lightweight profiling tool for Arduino to measure and average execution time of
+ * code blocks using microsecond precision.
+ * * Usage:
+ * - Initialize with a Print object (e.g., IntervalTimer timer(Serial) or timer(YBP)).
+ * - Call start() once to set the baseline timestamp.
+ * - Call time("label") at the end of a code block to record micros since the last mark.
+ * - Call print() to output a summary table of averages to the configured Print device.
+ * - Call getEntries() to retrieve raw data for custom processing or JSON serialization.
  *
- * Notes:
- *  - Uses micros() for timing and uint32_t subtraction for rollover-safe intervals.
- *  - Stores per-label totals and counts in a std::vector.
- *  - Labels should be stable C strings (e.g., string literals) for the lifetime of the program.
+ * Technical Notes:
+ * - Rollover-Safe: Uses uint32_t subtraction with micros() to handle hardware timer wrap-around.
+ * - Memory: Stores results in a std::vector. Labels should be stable C-strings (string literals)
+ * to avoid memory corruption or excessive string comparison.
+ * - Flexibility: Output can be redirected to any Arduino 'Print' child class (Serial, File, LCD).
  */
 class IntervalTimer
 {
   public:
-    IntervalTimer() : _last_us(0), _last_print_ms(0) {}
+    struct Entry {
+        const char* label; // expected to be a stable C-string (e.g., literal)
+        uint64_t total_us; // sum of intervals in microseconds
+        uint32_t count;    // number of intervals recorded
+    };
+
+    // Constructor now accepts a Print object, defaulting to Serial
+    IntervalTimer(Print& printer = Serial) : _printer(&printer), _last_us(0) {}
+
+    // Allow changing the printer at runtime if needed
+    void setPrinter(Print& printer) { _printer = &printer; }
 
     // Mark the starting point for the next interval.
     void start() { _last_us = micros(); }
@@ -45,68 +60,38 @@ class IntervalTimer
       _last_us = micros();
     }
 
+    const std::vector<Entry>& getEntries() const
+    {
+      return _entries;
+    }
+
     // Print averages for each label.
-    // - interval_ms == 0 => print immediately.
-    // - otherwise prints only if at least interval_ms has elapsed since last print.
     void print(uint32_t interval_ms = 0)
     {
-      const uint32_t now_ms = millis();
-      if (interval_ms != 0) {
-        const uint32_t elapsed = now_ms - _last_print_ms; // rollover-safe
-        if (elapsed < interval_ms)
-          return;
-      }
-      _last_print_ms = now_ms;
-
       if (_entries.empty())
         return;
 
       unsigned long total_us = 0;
-      YBP.println(F("=== IntervalTimer averages (us) ==="));
+      _printer->println(F("=== IntervalTimer averages (us) ==="));
       for (const auto& e : _entries) {
         if (e.count == 0)
           continue;
         const uint32_t avg_us = static_cast<uint32_t>(e.total_us / e.count);
         total_us += avg_us;
         // Keep it simple: label, average in microseconds, and sample count.
-        YBP.printf("%s: avg=%lu us  (n=%lu)\n",
+        _printer->printf("%s: avg=%lu us  (n=%lu)\n",
           e.label ? e.label : "(null)",
           static_cast<unsigned long>(avg_us),
           static_cast<unsigned long>(e.count));
       }
-      YBP.printf("Total: avg=%lu us\n",
+      _printer->printf("Total: avg=%lu us\n",
         static_cast<unsigned long>(total_us));
     }
 
-    void generateJSON(JsonVariant output)
-    {
-      if (_entries.empty())
-        return;
-
-      JsonArray times = output["loop_timer"].to<JsonArray>();
-
-      for (const auto& e : _entries) {
-        if (e.count == 0)
-          continue;
-
-        const uint32_t avg_us = static_cast<uint32_t>(e.total_us / e.count);
-
-        JsonObject entry = times.add<JsonObject>();
-        entry["name"] = e.label;
-        entry["usec"] = avg_us;
-      }
-    }
-
   private:
-    struct Entry {
-        const char* label; // expected to be a stable C-string (e.g., literal)
-        uint64_t total_us; // sum of intervals in microseconds
-        uint32_t count;    // number of intervals recorded
-    };
-
+    Print* _printer; // Pointer to the output stream
     std::vector<Entry> _entries;
-    uint32_t _last_us;       // last timestamp from start()/time(), in micros()
-    uint32_t _last_print_ms; // last time we printed, in millis()
+    uint32_t _last_us; // last timestamp from start()/time(), in micros()
 
     Entry& findOrCreate(const char* label)
     {

@@ -44,7 +44,7 @@ void IRAM_ATTR core1_tick_cb(void)
   }
 }
 
-DebugController::DebugController(YarrboardApp& app) : BaseController(app, "debug")
+DebugController::DebugController(YarrboardApp& app) : BaseController(app, "debug"), it(YBP)
 {
 }
 
@@ -112,7 +112,24 @@ bool DebugController::setup()
 
 void DebugController::generateStatsHook(JsonVariant output)
 {
-  it.generateJSON(output);
+  if (it.getEntries().empty())
+    return;
+
+  JsonArray times = output["loop_timer"].to<JsonArray>();
+
+  for (const auto& e : it.getEntries()) {
+    if (e.count == 0)
+      continue;
+
+    const uint32_t avg_us = static_cast<uint32_t>(e.total_us / e.count);
+
+    JsonObject entry = times.add<JsonObject>();
+    entry["name"] = e.label;
+    entry["usec"] = avg_us;
+    entry["count"] = e.count;
+  }
+
+  it.reset();
 }
 
 void DebugController::handleCrashMe(JsonVariantConst input, JsonVariant output)
