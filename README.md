@@ -130,8 +130,6 @@ MyProject/
 │   ├── logo.png          # Project logo
 │   ├── js/               # Custom JavaScript
 │   └── style.css         # Custom CSS
-└── data/
-    └── yarrboard.json    # Initial configuration
 ```
 
 ### Basic Integration
@@ -219,7 +217,7 @@ private:
   int setting;
 };
 
-// Register in setup()
+// Register in main.cpp setup()
 MyController myController(yba);
 yba.registerController(myController);
 ```
@@ -346,9 +344,6 @@ Controllers load configuration via hooks:
 void MyController::loadConfigHook(JsonVariantConst config) {
   // Access nested configuration
   setting1 = config["setting1"] | defaultValue;
-
-  // Controller-specific section automatically provided
-  // Path: config["controllers"]["mycontroller"]
 }
 ```
 
@@ -475,11 +470,13 @@ Built-in profiling via `IntervalTimer`:
 
 Multi-output logging to multiple sinks simultaneously:
 ```cpp
+#include <YarrboardPrint.h>
+
 // Logs to Serial, USB CDC, and WebSocket clients
-Serial.println("Debug message");
+YBP.println("Debug message");
 
 // Add custom print sink
-yba.ybp.addPrinter(&myPrintSink);
+YPB.addPrinter(&myPrintSink);
 ```
 
 ### Core Dump Support
@@ -552,7 +549,9 @@ Please ensure code follows existing style and includes appropriate documentation
 Built on excellent open-source libraries:
 - PsychicHttp by @hoeken
 - ArduinoJson by @bblanchon
+- PsychicMqttClient by @elims
 - FastLED by @FastLED
 - ETL by @jwellbelove
 - esp32FOTA by @chrisjoyce911
 - ESP32 Arduino Core by Espressif
+- Improv Wifi by [Open Home Foundation](https://www.openhomefoundation.org/)
