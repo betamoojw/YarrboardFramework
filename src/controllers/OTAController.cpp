@@ -30,25 +30,30 @@ bool OTAController::setup()
 
   FOTA = new esp32FOTA(_app.hardware_version, _app.firmware_version, validate_firmware);
 
-  FOTA->setManifestURL(firmware_manifest_url);
-  FOTA->setPubKey(MyPubKey);
-  FOTA->useBundledCerts();
+  if (strlen(firmware_manifest_url)) {
+    FOTA->setManifestURL(firmware_manifest_url);
+    FOTA->setPubKey(MyPubKey);
+    FOTA->useBundledCerts();
 
-  FOTA->setUpdateBeginFailCb(_updateBeginFailCallbackStatic);
-  FOTA->setProgressCb(_progressCallbackStatic);
-  FOTA->setUpdateEndCb(_updateEndCallbackStatic);
-  FOTA->setUpdateCheckFailCb(_updateCheckFailCallbackStatic);
+    FOTA->setUpdateBeginFailCb(_updateBeginFailCallbackStatic);
+    FOTA->setProgressCb(_progressCallbackStatic);
+    FOTA->setUpdateEndCb(_updateEndCallbackStatic);
+    FOTA->setUpdateCheckFailCb(_updateCheckFailCallbackStatic);
 
-  FOTA->printConfig();
-
-  return true;
+    return true;
+  } else {
+    YBP.println("No firmware_manifest_url set, disabling OTA firmware downloading.");
+    return false;
+  }
 }
 
 void OTAController::loop()
 {
-  if (doOTAUpdate) {
-    FOTA->handle();
-    doOTAUpdate = false;
+  if (strlen(firmware_manifest_url)) {
+    if (doOTAUpdate) {
+      FOTA->handle();
+      doOTAUpdate = false;
+    }
   }
 
   if (_cfg.app_enable_ota) {
@@ -64,7 +69,9 @@ void OTAController::end()
 
 bool OTAController::checkOTA()
 {
-  return FOTA->execHTTPcheck();
+  if (strlen(firmware_manifest_url))
+    return FOTA->execHTTPcheck();
+  return false;
 }
 
 void OTAController::startOTA()

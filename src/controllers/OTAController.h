@@ -31,7 +31,7 @@ class OTAController : public BaseController
     bool checkOTA();
     void startOTA();
 
-    const char* firmware_manifest_url = "https://raw.githubusercontent.com/hoeken/yarrboard-firmware/main/firmware.json";
+    const char* firmware_manifest_url = "";
     bool validate_firmware = true;
 
   private:

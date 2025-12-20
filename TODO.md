@@ -1,9 +1,5 @@
 ## v1.0.0 Release
 
-* add github_url
-
-* pull in latest html / js from yb-firmware
-
 * create a README describing the project
 
 ## Long Term

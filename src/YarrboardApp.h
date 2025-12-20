@@ -54,6 +54,7 @@ class YarrboardApp
     const char* hardware_url = "";
     const char* project_name = "Yarrboard";
     const char* project_url = "https://github.com/hoeken/yarrboard";
+    const char* github_url = "";
 
     const char* default_hostname = "yarrboard";
     const char* default_admin_user = "admin";

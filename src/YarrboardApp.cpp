@@ -44,9 +44,9 @@ void YarrboardApp::setup()
 
   for (auto* c : _controllers) {
     if (c->setup())
-      YBP.printf("✅ %s OK\n", c->getName());
+      YBP.printf("✅ %s setup OK\n", c->getName());
     else
-      YBP.printf("❌ %s FAILED\n", c->getName());
+      YBP.printf("❌ %s setup FAILED\n", c->getName());
   }
 
   // we're done with startup log
