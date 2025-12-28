@@ -15,13 +15,17 @@
   * if yarrboard.json is found -> also check config.is_first_boot so its possible to bundle a default json
   * if wifi does not connect, we should wait for a 5s press of boot, re-enable is_first_boot (or new variable like improve_finished = false)
 
-* we need to add an order field to controllers or registerController() that determines how the setup / loop order.
-  * sort on add
-  * mqtt needs to be last
+* bootstrap nav bar seems to be slightly broken
+  * link colors not changing back after leaving page
+  * nav bar not working well on vertical mobile
 
 * global brightness
   * rgb controller -> setMaxBrightness()
   * onBrightness -> max * brightness
+
+* we need to add an order field to controllers or registerController() that determines how the setup / loop order.
+  * sort on add
+  * mqtt needs to be last
 
 * login, hello, logout are special commands.  would be nice to have them use the same command registry
   * problem is we need certain context specific things (mode, connection id, and role)
@@ -41,6 +45,11 @@
 * implement protocol over mqtt
 
 * figure out how to compile without nimbleble -> move to external dependency
+
+* more App.js functions:
+  * addPage("page", "content", openCallback);
+  * onOpenPage(page, callback);
+  * other app.* callbacks to register various things?
 
 ## Long Term
 
