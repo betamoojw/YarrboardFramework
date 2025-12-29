@@ -1,7 +1,9 @@
 ## v1.1
 
 * find a way to provide html/css/js/etc files as part of library framework included.
-  * create a meta-include header at gulp/gulped.h with #includes for each gulped file
+
+  * dont use .gz or _gz in final gulped file paths, variable names, etc.
+  * add coredump and site.manifest to forbidden files
   * split css between framework and project
 
 * is_first_boot / improvwifi

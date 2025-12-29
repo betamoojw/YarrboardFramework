@@ -28,6 +28,13 @@ void HTTPController::registerGulpedFile(const GulpedFile* file, const char* path
   }
 }
 
+void HTTPController::registerGulpedFiles(const GulpedFile* files[], int count)
+{
+  for (int i = 0; i < count; i++) {
+    registerGulpedFile(files[i]);
+  }
+}
+
 bool HTTPController::setup()
 {
   sendMutex = xSemaphoreCreateMutex();
@@ -62,7 +69,7 @@ bool HTTPController::setup()
 
   // Register all gulped file routes
   for (auto& pair : gulpedFiles) {
-    // YBP.printf("Registered gulp file %s\n", pair.first);
+    YBP.printf("Registered gulp file at %s\n", pair.first);
     server->on(pair.first, HTTP_GET, [this](PsychicRequest* request, PsychicResponse* response) {
       return handleGulpedFile(request, response);
     });

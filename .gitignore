@@ -34,7 +34,8 @@ node_modules
 **.pio
 **.vscode
 /build
-examples/platformio/src
+examples/platformio/gulp
 examples/platformio/dist
+examples/platformio/temp
 Visual\ Micro
 *.gz.h

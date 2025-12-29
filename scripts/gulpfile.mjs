@@ -30,7 +30,7 @@ import { deleteAsync } from 'del';
 import inline from 'gulp-inline';
 import inlineImages from 'gulp-css-base64';
 import favicon from 'gulp-base64-favicon';
-import { readFileSync, createWriteStream, readdirSync, existsSync, mkdirSync, statSync } from 'fs';
+import { readFileSync, createWriteStream, readdirSync, existsSync, mkdirSync, statSync, rmSync } from 'fs';
 import { createHash } from 'crypto';
 import { join, basename, relative, dirname, extname } from 'path';
 import { lookup as mimeLookup } from 'mime-types';
@@ -56,11 +56,18 @@ const PROJECT_PATH = process.env.YARRBOARD_PROJECT_PATH || '.';
 console.log(`Using YarrboardFramework from: ${FRAMEWORK_PATH}`);
 console.log(`Using project path: ${PROJECT_PATH}`);
 
+// Determine the output directory for generated headers
+// If src/ folder exists, use src/gulp, otherwise use gulp/ at top level
+const srcDir = join(PROJECT_PATH, 'src');
+const gulpOutputDir = existsSync(srcDir)
+    ? join(srcDir, 'gulp')
+    : join(PROJECT_PATH, 'gulp');
+
 const PATHS = {
     frameworkHtml: join(FRAMEWORK_PATH, 'html'),  // Framework HTML/CSS/JS
     projectHtml: join(PROJECT_PATH, 'html'),      // Project-specific assets (logos, CSS, JS)
-    dist: join(PROJECT_PATH, 'dist'),             // Output directory
-    src: join(PROJECT_PATH, 'src/gulp')           // Generated headers directory
+    tempOutput: join(PROJECT_PATH, 'temp'),       // Temporary output directory
+    gulpOutput: gulpOutputDir                     // Generated headers directory
 };
 
 // Files to ignore when scanning for assets
@@ -69,14 +76,14 @@ const IGNORE_FILES = ['index.html'];
 console.log('PATHS configuration:');
 console.log(`  frameworkHtml: ${PATHS.frameworkHtml}`);
 console.log(`  projectHtml: ${PATHS.projectHtml}`);
-console.log(`  dist: ${PATHS.dist}`);
-console.log(`  src: ${PATHS.src}`);
+console.log(`  tempOutput: ${PATHS.tempOutput}`);
+console.log(`  gulpOutput: ${PATHS.gulpOutput}`);
 
-// Ensure the output directory exists
-if (!existsSync(PATHS.src)) {
-    console.log(`Creating missing directory: ${PATHS.src}`);
-    mkdirSync(PATHS.src, { recursive: true });
+// Ensure a fresh output directory
+if (existsSync(PATHS.gulpOutput)) {
+    rmSync(PATHS.gulpOutput, { recursive: true, force: true });
 }
+mkdirSync(PATHS.gulpOutput, { recursive: true });
 
 // Recursively scan directory for files matching extension
 function scanDirectory(dir, extension, baseDir = dir) {
@@ -284,8 +291,9 @@ async function writeHeaderFile(source, destination, name, originalFilename) {
             wstream.write(`#define ${guardName}\n\n`);
             wstream.write(`#include "GulpedFile.h"\n\n`);
 
-            // Write the filename
-            wstream.write(`const char _${name}_filename[] = "/${originalFilename}";\n`);
+            // Write the filename (URL-encoded, preserving directory separators)
+            const encodedFilename = originalFilename.split('/').map(segment => encodeURIComponent(segment)).join('/');
+            wstream.write(`const char _${name}_filename[] = "/${encodedFilename}";\n`);
 
             // Write the MIME type
             wstream.write(`const char _${name}_mimetype[] = "${mimeType}";\n`);
@@ -333,18 +341,18 @@ async function writeHeaderFile(source, destination, name, originalFilename) {
 // ============================================================================
 
 async function clean() {
-    return deleteAsync([join(PATHS.dist, '*')], { force: true });
+    return deleteAsync([PATHS.tempOutput], { force: true });
 }
 
 function buildInlineHtml() {
     return src(join(PATHS.frameworkHtml, '*.html'))
         .pipe(favicon({ src: PATHS.frameworkHtml }))
         .pipe(inline(INLINE_OPTIONS))
-        .pipe(dest(PATHS.dist));
+        .pipe(dest(PATHS.tempOutput));
 }
 
 async function injectAssets() {
-    const htmlPath = join(PATHS.dist, 'index.html');
+    const htmlPath = join(PATHS.tempOutput, 'index.html');
 
     if (!existsSync(htmlPath)) {
         console.log('No HTML file found to inject assets into');
@@ -355,15 +363,15 @@ async function injectAssets() {
 }
 
 function minifyAndCompress() {
-    return src(join(PATHS.dist, 'index.html'))
+    return src(join(PATHS.tempOutput, 'index.html'))
         .pipe(htmlmin(HTML_MIN_OPTIONS))
         .pipe(gzip())
-        .pipe(dest(PATHS.dist));
+        .pipe(dest(PATHS.tempOutput));
 }
 
 async function embedHtml() {
-    const source = join(PATHS.dist, 'index.html.gz');
-    const destination = join(PATHS.src, 'index.html.gz.h');
+    const source = join(PATHS.tempOutput, 'index.html.gz');
+    const destination = join(PATHS.gulpOutput, 'index.html.gz.h');
     await writeHeaderFile(source, destination, 'index_html_gz', 'index.html');
 }
 
@@ -380,7 +388,7 @@ function compressFile(filename) {
 
     // Get the directory part of the filename to preserve structure
     const dir = filename.includes('/') ? filename.substring(0, filename.lastIndexOf('/')) : '';
-    const destPath = dir ? join(PATHS.dist, dir) : PATHS.dist;
+    const destPath = dir ? join(PATHS.tempOutput, dir) : PATHS.tempOutput;
 
     return src(sourcePath)
         .pipe(gzip())
@@ -388,8 +396,8 @@ function compressFile(filename) {
 }
 
 async function embedFile(filename) {
-    const source = join(PATHS.dist, `${filename}.gz`);
-    const destination = join(PATHS.src, `${filename}.gz.h`);
+    const source = join(PATHS.tempOutput, `${filename}.gz`);
+    const destination = join(PATHS.gulpOutput, `${filename}.gz.h`);
     const safeName = filename.replace(/[^a-z0-9]/gi, '_') + '_gz';
 
     // Ensure destination directory exists
@@ -402,7 +410,7 @@ async function embedFile(filename) {
 }
 
 async function generateMetaInclude() {
-    const metaIncludePath = join(PATHS.src, 'gulped.h');
+    const metaIncludePath = join(PATHS.gulpOutput, 'gulped.h');
     const wstream = createWriteStream(metaIncludePath);
 
     // Collect all files and their struct names
@@ -469,7 +477,8 @@ const buildAll = series(
     minifyAndCompress,
     embedHtml,
     ...fileTasks,
-    generateMetaInclude
+    generateMetaInclude,
+    clean
 );
 
 // ============================================================================

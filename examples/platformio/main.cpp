@@ -13,15 +13,14 @@
 #include <YarrboardFramework.h>
 
 // generated at build by running "gulp" in the firmware directory.
-#include "src/gulp/gulped.h"
+#include "gulp/gulped.h"
 
 YarrboardApp yba;
 NavicoController navico(yba);
 
 void setup()
 {
-  yba.http.registerGulpedFile(&index_html_gz);
-  yba.http.registerGulpedFile(&logo_png_gz);
+  yba.http.registerGulpedFiles(gulpedFiles, gulpedFilesCount);
 
   yba.board_name = "Framework Test";
   yba.default_hostname = "yarrboard";
