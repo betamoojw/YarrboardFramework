@@ -32,7 +32,7 @@ import inlineImages from 'gulp-css-base64';
 import favicon from 'gulp-base64-favicon';
 import { readFileSync, createWriteStream, readdirSync, existsSync, mkdirSync, statSync } from 'fs';
 import { createHash } from 'crypto';
-import { join, basename, relative } from 'path';
+import { join, basename, relative, dirname } from 'path';
 
 // ============================================================================
 // Configuration
@@ -62,6 +62,9 @@ const PATHS = {
     src: join(PROJECT_PATH, 'src/gulp')           // Generated headers directory
 };
 
+// Files to ignore when scanning for assets
+const IGNORE_FILES = ['index.html'];
+
 console.log('PATHS configuration:');
 console.log(`  frameworkHtml: ${PATHS.frameworkHtml}`);
 console.log(`  projectHtml: ${PATHS.projectHtml}`);
@@ -84,19 +87,19 @@ function scanDirectory(dir, extension, baseDir = dir) {
     }
 
     const entries = readdirSync(dir);
-    console.log(`  Scanning directory: ${dir} (${entries.length} entries)`);
+    // console.log(`  Scanning directory: ${dir} (${entries.length} entries)`);
 
     for (const entry of entries) {
         const fullPath = join(dir, entry);
         const stat = statSync(fullPath);
 
         if (stat.isDirectory()) {
-            console.log(`    Found subdirectory: ${entry}`);
+            // console.log(`    Found subdirectory: ${entry}`);
             files.push(...scanDirectory(fullPath, extension, baseDir));
         } else if (entry.endsWith(extension)) {
             // Store relative path from base directory for better organization
             const relativePath = relative(baseDir, fullPath);
-            console.log(`    Found matching file: ${entry} -> ${relativePath}`);
+            // console.log(`    Found matching file: ${entry} -> ${relativePath}`);
             files.push(relativePath);
         } else {
             // console.log(`    Skipping file: ${entry} (doesn't end with ${extension})`);
@@ -106,31 +109,90 @@ function scanDirectory(dir, extension, baseDir = dir) {
     return files;
 }
 
-// Find project CSS and JS files
+// Find all files matching a filter function, checking project directory first, then framework
+function findFiles(filterFn, ignoreList = []) {
+    const files = [];
+
+    // Helper to recursively scan a directory and add matching files
+    const scanDir = (dir, source, baseDir = dir) => {
+        if (!existsSync(dir)) return;
+
+        const entries = readdirSync(dir);
+        entries.forEach(entry => {
+            const fullPath = join(dir, entry);
+            const stat = statSync(fullPath);
+
+            if (stat.isDirectory()) {
+                // Recurse into subdirectories
+                scanDir(fullPath, source, baseDir);
+            } else {
+                // Process files
+                const relativePath = relative(baseDir, fullPath);
+                const filename = basename(fullPath);
+
+                // Skip hidden files, ignored files, and files that don't match the filter
+                if (!filename.startsWith('.') && !ignoreList.includes(filename) && filterFn(filename)) {
+                    // Only add if not already found (project takes precedence over framework)
+                    if (!files.some(f => f.file === relativePath)) {
+                        files.push({ file: relativePath, source });
+                    }
+                }
+            }
+        });
+    };
+
+    // Check project html directory first (takes precedence)
+    scanDir(PATHS.projectHtml, 'project');
+
+    // Then check framework html directory
+    scanDir(PATHS.frameworkHtml, 'framework');
+
+    return files.map(f => f.file);
+}
+
+// Find project CSS, JS, and other asset files
 function findProjectAssets() {
     console.log(`\n=== Scanning for project assets ===`);
-    console.log(`Project HTML path: ${PATHS.projectHtml}`);
-    console.log(`Path exists: ${existsSync(PATHS.projectHtml)}`);
+    // console.log(`Project HTML path: ${PATHS.projectHtml}`);
+    // console.log(`Path exists: ${existsSync(PATHS.projectHtml)}`);
 
     const assets = {
         css: [],
-        js: []
+        js: [],
+        files: []
     };
 
     if (existsSync(PATHS.projectHtml)) {
-        console.log(`Scanning for .css files...`);
+        // console.log(`Scanning for .css files...`);
         assets.css = scanDirectory(PATHS.projectHtml, '.css');
 
-        console.log(`Scanning for .js files...`);
+        // console.log(`Scanning for .js files...`);
         assets.js = scanDirectory(PATHS.projectHtml, '.js');
 
-        console.log(`\nFound ${assets.css.length} project CSS file(s):`);
-        assets.css.forEach(file => console.log(`  - ${file}`));
-
-        console.log(`Found ${assets.js.length} project JS file(s):`);
-        assets.js.forEach(file => console.log(`  - ${file}`));
     } else {
         console.log(`Project HTML directory does not exist, skipping asset scan`);
+    }
+
+    // Find other asset files (non-CSS, non-JS, non-hidden)
+    // console.log(`\nScanning for other asset files...`);
+    assets.files = findFiles(
+        file => !file.endsWith('.css') && !file.endsWith('.js'),
+        IGNORE_FILES
+    );
+
+    if (assets.css.length) {
+        console.log(`Found ${assets.css.length} project CSS file(s):`);
+        assets.css.forEach(file => console.log(`  - ${file}`));
+    }
+
+    if (assets.js.length) {
+        console.log(`Found ${assets.js.length} project JS file(s):`);
+        assets.js.forEach(file => console.log(`  - ${file}`));
+    }
+
+    if (assets.files.length) {
+        console.log(`Found ${assets.files.length} file(s):`);
+        assets.files.forEach(file => console.log(`  - ${file}`));
     }
 
     console.log(`=== Asset scan complete ===\n`);
@@ -138,41 +200,6 @@ function findProjectAssets() {
     return assets;
 }
 
-// Intelligently find logos in project and framework directories
-function findLogos() {
-    const logos = [];
-    const logoPattern = /^logo(-.*)?\.png$/;
-
-    // Check project html directory first
-    if (existsSync(PATHS.projectHtml)) {
-        const projectFiles = readdirSync(PATHS.projectHtml);
-        projectFiles.forEach(file => {
-            if (logoPattern.test(file)) {
-                logos.push({ file, source: 'project' });
-            }
-        });
-    }
-
-    // Then check framework html directory
-    if (existsSync(PATHS.frameworkHtml)) {
-        const frameworkFiles = readdirSync(PATHS.frameworkHtml);
-        frameworkFiles.forEach(file => {
-            // Only add if not already found in project
-            if (logoPattern.test(file) && !logos.some(logo => logo.file === file)) {
-                logos.push({ file, source: 'framework' });
-            }
-        });
-    }
-
-    console.log(`Found ${logos.length} logo(s):`);
-    logos.forEach(logo => {
-        console.log(`  - ${logo.file} (from ${logo.source})`);
-    });
-
-    return logos.map(logo => logo.file);
-}
-
-const LOGOS = findLogos();
 const PROJECT_ASSETS = findProjectAssets();
 
 const HTML_MIN_OPTIONS = {
@@ -311,7 +338,7 @@ async function embedHtml() {
     await writeHeaderFile(source, destination, 'index_html_gz');
 }
 
-function compressLogo(filename) {
+function compressFile(filename) {
     // Check project directory first, then framework directory
     let sourcePath;
     if (existsSync(join(PATHS.projectHtml, filename))) {
@@ -319,25 +346,35 @@ function compressLogo(filename) {
     } else if (existsSync(join(PATHS.frameworkHtml, filename))) {
         sourcePath = join(PATHS.frameworkHtml, filename);
     } else {
-        throw new Error(`Logo file not found: ${filename}`);
+        throw new Error(`File not found: ${filename}`);
     }
+
+    // Get the directory part of the filename to preserve structure
+    const dir = filename.includes('/') ? filename.substring(0, filename.lastIndexOf('/')) : '';
+    const destPath = dir ? join(PATHS.dist, dir) : PATHS.dist;
 
     return src(sourcePath)
         .pipe(gzip())
-        .pipe(dest(PATHS.dist));
+        .pipe(dest(destPath));
 }
 
-async function embedLogo(filename) {
+async function embedFile(filename) {
     const source = join(PATHS.dist, `${filename}.gz`);
     const destination = join(PATHS.src, `${filename}.gz.h`);
     const safeName = filename.replace(/[^a-z0-9]/gi, '_') + '_gz';
 
+    // Ensure destination directory exists
+    const destDir = dirname(destination);
+    if (!existsSync(destDir)) {
+        mkdirSync(destDir, { recursive: true });
+    }
+
     await writeHeaderFile(source, destination, safeName);
 }
 
-function createLogoTask(filename) {
-    const compress = () => compressLogo(filename);
-    const embed = () => embedLogo(filename);
+function createFileTask(filename) {
+    const compress = () => compressFile(filename);
+    const embed = () => embedFile(filename);
 
     return series(compress, embed);
 }
@@ -346,14 +383,14 @@ function createLogoTask(filename) {
 // Task Composition
 // ============================================================================
 
-const logoTasks = LOGOS.map(logo => createLogoTask(logo));
+const fileTasks = PROJECT_ASSETS.files.map(file => createFileTask(file));
 const buildAll = series(
     clean,
     buildInlineHtml,
     injectAssets,
     minifyAndCompress,
     embedHtml,
-    ...logoTasks
+    ...fileTasks
 );
 
 // ============================================================================

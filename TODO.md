@@ -1,15 +1,11 @@
 ## v1.1
 
 * find a way to provide html/css/js/etc files as part of library framework included.
-  * modify the gulp.js script to pull from the framework lib directory?
-  * project specific gulp rules to pull in custom stuff logo, css, js, etc.
-      * html/index.html -> overrides framework html
-      * html/logo.png -> overrides framework.html
-      * html/css/* -> gets added to the framework css includes
-      * html/js/* -> gets added to the framework js includes
-  * create a better gulped file format that includes data, hash, and length in one struct
-    * GulpedFileResponse or something.
+  * create a better gulped file format that includes data, hash, path, content-type, and length in one struct
+    * GulpedFileResponse / GulpedFileHandler or something.
     * possibly roll this into Psychic
+  * 'gulpify' all non-css, non-js, non-hidden files into the new format (logos included)
+  * create a meta-include with #includes for each gulped file
 
 * is_first_boot / improvwifi
   * if yarrboard.json is found -> also check config.is_first_boot so its possible to bundle a default json
