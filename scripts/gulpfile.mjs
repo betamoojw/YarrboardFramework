@@ -371,8 +371,8 @@ function minifyAndCompress() {
 
 async function embedHtml() {
     const source = join(PATHS.tempOutput, 'index.html.gz');
-    const destination = join(PATHS.gulpOutput, 'index.html.gz.h');
-    await writeHeaderFile(source, destination, 'index_html_gz', 'index.html');
+    const destination = join(PATHS.gulpOutput, 'index.html.h');
+    await writeHeaderFile(source, destination, 'index_html', 'index.html');
 }
 
 function compressFile(filename) {
@@ -397,8 +397,8 @@ function compressFile(filename) {
 
 async function embedFile(filename) {
     const source = join(PATHS.tempOutput, `${filename}.gz`);
-    const destination = join(PATHS.gulpOutput, `${filename}.gz.h`);
-    const safeName = filename.replace(/[^a-z0-9]/gi, '_') + '_gz';
+    const destination = join(PATHS.gulpOutput, `${filename}.h`);
+    const safeName = filename.replace(/[^a-z0-9]/gi, '_');
 
     // Ensure destination directory exists
     const destDir = dirname(destination);
@@ -415,7 +415,7 @@ async function generateMetaInclude() {
 
     // Collect all files and their struct names
     const allFiles = ['index.html', ...PROJECT_ASSETS.files];
-    const structNames = allFiles.map(file => file.replace(/[^a-z0-9]/gi, '_') + '_gz');
+    const structNames = allFiles.map(file => file.replace(/[^a-z0-9]/gi, '_'));
 
     // Write header guard
     wstream.write(`#ifndef GULPED_H\n`);
@@ -423,9 +423,9 @@ async function generateMetaInclude() {
     wstream.write(`// Auto-generated file - includes all gulped assets\n\n`);
 
     // Include all header files
-    wstream.write(`#include "index.html.gz.h"\n`);
+    wstream.write(`#include "index.html.h"\n`);
     for (const file of PROJECT_ASSETS.files) {
-        const headerFile = `${file}.gz.h`;
+        const headerFile = `${file}.h`;
         wstream.write(`#include "${headerFile}"\n`);
     }
 

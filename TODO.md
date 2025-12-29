@@ -1,8 +1,6 @@
 ## v1.1
 
 * find a way to provide html/css/js/etc files as part of library framework included.
-
-  * dont use .gz or _gz in final gulped file paths, variable names, etc.
   * add coredump and site.manifest to forbidden files
   * split css between framework and project
 
