@@ -134,6 +134,16 @@
       $("#saveMQTTSettings").on('click', YB.App.saveMQTTSettings);
       $("#saveNetworkSettings").on('click', YB.App.saveNetworkSettings);
       $("#saveMiscellaneousSettings").on('click', YB.App.saveMiscellaneousSettings);
+
+      // Mobile navbar collapse handler
+      // Let the onclick handler execute first, then collapse the navbar
+      $('.navbar-collapse ul li a:not(.dropdown-toggle)').on('click', function () {
+        setTimeout(function () {
+          if ($('.navbar-collapse').hasClass('show')) {
+            $('.navbar-toggler').click();
+          }
+        }, 10);
+      });
     },
 
     startWebsocket: function () {

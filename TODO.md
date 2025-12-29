@@ -4,9 +4,6 @@
   * if yarrboard.json is found -> also check config.is_first_boot so its possible to bundle a default json
   * if wifi does not connect, we should wait for a 5s press of boot, re-enable is_first_boot (or new variable like improve_finished = false)
 
-* bootstrap nav bar seems to be slightly broken
-  * nav bar not working well on vertical mobile
-
 * global brightness
   * rgb controller -> setMaxBrightness()
   * onBrightness -> max * brightness
