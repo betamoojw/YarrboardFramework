@@ -1,10 +1,6 @@
 ## v1.1
 
 * find a way to provide html/css/js/etc files as part of library framework included.
-  * create a better gulped file format that includes data, hash, path, content-type, and length in one struct
-    * GulpedFileResponse / GulpedFileHandler or something.
-    * possibly roll this into Psychic
-  * 'gulpify' all non-css, non-js, non-hidden files into the new format (logos included)
   * create a meta-include with #includes for each gulped file
 
 * is_first_boot / improvwifi

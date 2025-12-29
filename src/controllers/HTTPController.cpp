@@ -20,6 +20,14 @@ HTTPController::HTTPController(YarrboardApp& app) : BaseController(app, "http")
 {
 }
 
+void HTTPController::registerGulpedFile(const GulpedFile* file, const char* path /* = nullptr */)
+{
+  if (file != nullptr && file->filename != nullptr) {
+    const char* key = (path != nullptr) ? path : file->filename;
+    gulpedFiles[key] = file;
+  }
+}
+
 bool HTTPController::setup()
 {
   sendMutex = xSemaphoreCreateMutex();
@@ -52,41 +60,17 @@ bool HTTPController::setup()
   // Populate the last modification date based on build datetime
   sprintf(last_modified, "%s %s GMT", __DATE__, __TIME__);
 
+  // Register all gulped file routes
+  for (auto& pair : gulpedFiles) {
+    // YBP.printf("Registered gulp file %s\n", pair.first);
+    server->on(pair.first, HTTP_GET, [this](PsychicRequest* request, PsychicResponse* response) {
+      return handleGulpedFile(request, response);
+    });
+  }
+
+  // index shortcut to index.html
   server->on("/", HTTP_GET, [this](PsychicRequest* request, PsychicResponse* response) {
-    // Check if the client already has the same version and respond with a 304
-    // (Not modified)
-    if (request->header("If-Modified-Since").indexOf(last_modified) > 0)
-      return response->send(304);
-    // What about our ETag?
-    else if (request->header("If-None-Match").equals(index->sha256))
-      return response->send(304);
-    else {
-      response->setCode(200);
-      response->setContentType("text/html");
-
-      // Tell the browswer the contemnt is Gzipped
-      response->addHeader("Content-Encoding", "gzip");
-
-      // And set the last-modified datetime so we can check if we need to send
-      // it again next time or not
-      response->addHeader("Last-Modified", last_modified);
-      response->addHeader("ETag", index->sha256);
-
-      // add our actual content
-      response->setContent(index->data, index->length);
-
-      return response->send();
-    }
-  });
-
-  server->on("/logo.png", HTTP_GET, [this](PsychicRequest* request, PsychicResponse* response) {
-    response->setCode(200);
-    response->setContentType("image/png");
-    response->addHeader("Content-Encoding", "gzip");
-    response->addHeader("Last-Modified", last_modified);
-    response->addHeader("ETag", logo->sha256);
-    response->setContent(logo->data, logo->length);
-    return response->send();
+    return handleGulpedFile(request, response);
   });
 
   server->on("/site.webmanifest", HTTP_GET, [this](PsychicRequest* request, PsychicResponse* response) {
@@ -392,5 +376,49 @@ void HTTPController::handleWebsocketMessageLoop(WebsocketRequest* request)
     } else {
       YBP.println("Error allocating in handleWebsocketMessageLoop()");
     }
+  }
+}
+
+esp_err_t HTTPController::handleGulpedFile(PsychicRequest* request, PsychicResponse* response)
+{
+  // special case for index
+  String path;
+  if (request->path().equals("/"))
+    path = "/index.html";
+  else
+    path = request->path();
+
+  // Look up the file in our map
+  auto it = gulpedFiles.find(path.c_str());
+  if (it == gulpedFiles.end()) {
+    YBP.printf("Gulped file %s does not exist.\n", path.c_str());
+    return response->send(404);
+  }
+
+  const GulpedFile* file = it->second;
+
+  // Check if the client already has the same version and respond with a 304
+  // (Not modified)
+  if (request->header("If-Modified-Since").indexOf(last_modified) > 0)
+    return response->send(304);
+  // What about our ETag?
+  else if (request->header("If-None-Match").equals(file->sha256))
+    return response->send(304);
+  else {
+    response->setCode(200);
+    response->setContentType(file->mimetype);
+
+    // Tell the browswer the contemnt is Gzipped
+    response->addHeader("Content-Encoding", "gzip");
+
+    // And set the last-modified datetime so we can check if we need to send
+    // it again next time or not
+    response->addHeader("Last-Modified", last_modified);
+    response->addHeader("ETag", file->sha256);
+
+    // add our actual content
+    response->setContent(file->data, file->length);
+
+    return response->send();
   }
 }

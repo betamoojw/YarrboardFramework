@@ -285,7 +285,7 @@ async function writeHeaderFile(source, destination, name, originalFilename) {
             wstream.write(`#include "GulpedFile.h"\n\n`);
 
             // Write the filename
-            wstream.write(`const char _${name}_filename[] = "${originalFilename}";\n`);
+            wstream.write(`const char _${name}_filename[] = "/${originalFilename}";\n`);
 
             // Write the MIME type
             wstream.write(`const char _${name}_mimetype[] = "${mimeType}";\n`);

@@ -23,6 +23,9 @@
 #include <PsychicHttp.h>
 #include <PsychicHttpsServer.h>
 #include <freertos/queue.h>
+#include <etl/map.h>
+
+#define MAX_GULPED_FILES 32
 
 typedef struct {
     int socket;
@@ -42,6 +45,7 @@ class HTTPController : public BaseController
     void loop() override;
 
     void sendToAllWebsockets(const char* jsonString, UserRole auth_level);
+    void registerGulpedFile(const GulpedFile* file, const char* path = nullptr);
 
     const GulpedFile* index = nullptr;
     const GulpedFile* logo = nullptr;
@@ -56,9 +60,17 @@ class HTTPController : public BaseController
     QueueHandle_t wsRequests;
     SemaphoreHandle_t sendMutex;
 
+    struct CStringCompare {
+        bool operator()(const char* a, const char* b) const {
+            return strcmp(a, b) < 0;
+        }
+    };
+    etl::map<const char*, const GulpedFile*, MAX_GULPED_FILES, CStringCompare> gulpedFiles;
+
     void handleWebsocketMessageLoop(WebsocketRequest* request);
     esp_err_t handleWebServerRequest(JsonVariant input, PsychicRequest* request, PsychicResponse* response);
     void handleWebSocketMessage(PsychicWebSocketRequest* request, uint8_t* data, size_t len);
+    esp_err_t handleGulpedFile(PsychicRequest* request, PsychicResponse* response);
 };
 
 #endif /* !YARR_SERVER_H */
