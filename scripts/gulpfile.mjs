@@ -30,9 +30,9 @@ import { deleteAsync } from 'del';
 import inline from 'gulp-inline';
 import inlineImages from 'gulp-css-base64';
 import favicon from 'gulp-base64-favicon';
-import { readFileSync, createWriteStream } from 'fs';
+import { readFileSync, createWriteStream, readdirSync, existsSync } from 'fs';
 import { createHash } from 'crypto';
-import { join } from 'path';
+import { join, basename } from 'path';
 
 // ============================================================================
 // Configuration
@@ -62,16 +62,41 @@ const PATHS = {
     src: join(PROJECT_PATH, 'src/gulp')           // Generated headers directory
 };
 
-// const LOGOS = [
-//     'logo-sendit.png',
-//     'logo-brineomatic.png',
-//     'logo-frothfet.png'
-// ];
+// Intelligently find logos in project and framework directories
+function findLogos() {
+    const logos = [];
+    const logoPattern = /^logo(-.*)?\.png$/;
 
-const LOGOS = [
-    'logo.png',
-];
+    // Check project html directory first
+    if (existsSync(PATHS.projectHtml)) {
+        const projectFiles = readdirSync(PATHS.projectHtml);
+        projectFiles.forEach(file => {
+            if (logoPattern.test(file)) {
+                logos.push({ file, source: 'project' });
+            }
+        });
+    }
 
+    // Then check framework html directory
+    if (existsSync(PATHS.frameworkHtml)) {
+        const frameworkFiles = readdirSync(PATHS.frameworkHtml);
+        frameworkFiles.forEach(file => {
+            // Only add if not already found in project
+            if (logoPattern.test(file) && !logos.some(logo => logo.file === file)) {
+                logos.push({ file, source: 'framework' });
+            }
+        });
+    }
+
+    console.log(`Found ${logos.length} logo(s):`);
+    logos.forEach(logo => {
+        console.log(`  - ${logo.file} (from ${logo.source})`);
+    });
+
+    return logos.map(logo => logo.file);
+}
+
+const LOGOS = findLogos();
 
 const HTML_MIN_OPTIONS = {
     removeComments: true,
@@ -151,7 +176,17 @@ async function embedHtml() {
 }
 
 function compressLogo(filename) {
-    return src(join(PATHS.projectHtml, filename))
+    // Check project directory first, then framework directory
+    let sourcePath;
+    if (existsSync(join(PATHS.projectHtml, filename))) {
+        sourcePath = join(PATHS.projectHtml, filename);
+    } else if (existsSync(join(PATHS.frameworkHtml, filename))) {
+        sourcePath = join(PATHS.frameworkHtml, filename);
+    } else {
+        throw new Error(`Logo file not found: ${filename}`);
+    }
+
+    return src(sourcePath)
         .pipe(gzip())
         .pipe(dest(PATHS.dist));
 }
