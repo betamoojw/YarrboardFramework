@@ -58,6 +58,8 @@ class NetworkController : public BaseController
     // We use a static instance pointer and static methods to bridge the gap.
     static NetworkController* _instance;
 
+    void waitForBootPress();
+
     static void _onImprovErrorStatic(ImprovTypes::Error err);
     static void _onImprovConnectedStatic(const char* ssid, const char* password);
     static bool _onImprovCustomConnectWiFiStatic(const char* ssid, const char* password);

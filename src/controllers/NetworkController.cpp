@@ -25,11 +25,13 @@ NetworkController::NetworkController(YarrboardApp& app) : BaseController(app, "n
 
 bool NetworkController::setup()
 {
-
   _instance = this; // Capture the instance for callbacks
 
   uint64_t chipid = ESP.getEfuseMac(); // unique 48-bit MAC base ID
   snprintf(_cfg.uuid, sizeof(_cfg.uuid), "%04X%08lX", (uint16_t)(chipid >> 32), (uint32_t)chipid);
+
+  // pin 0 is boot pin
+  pinMode(YB_BOOT_PIN, INPUT);
 
   if (_cfg.is_first_boot)
     setupImprov();
@@ -51,6 +53,8 @@ void NetworkController::setupWifi()
     // try and connect
     if (connectToWifi(_cfg.wifi_ssid, _cfg.wifi_pass))
       startServices();
+    else
+      waitForBootPress();
   }
   // default to AP mode.
   else {
@@ -69,6 +73,39 @@ void NetworkController::setupWifi()
     // if DNSServer is started with "*" for domain name, it will reply with
     // provided IP to all DNS request
     dnsServer.start(DNS_PORT, "*", apIP);
+  }
+}
+
+void NetworkController::waitForBootPress()
+{
+  unsigned long pressStartTime = 0;
+  bool buttonPressed = false;
+
+  while (true) {
+    // Read the boot pin (LOW when pressed)
+    if (digitalRead(YB_BOOT_PIN) == LOW) {
+      if (!buttonPressed) {
+        // Button just pressed, record the time
+        buttonPressed = true;
+        pressStartTime = millis();
+      } else {
+        // Button is being held, check if 5 seconds have elapsed
+        if (millis() - pressStartTime >= 5000) {
+          YBP.println("Boot button held for 5 seconds - resetting to first boot");
+          _cfg.is_first_boot = true;
+
+          char error[128];
+          _cfg.saveConfig(error, sizeof(error));
+          ESP.restart();
+        }
+      }
+    } else {
+      // Button released, reset the tracking
+      buttonPressed = false;
+    }
+
+    delay(100);
+    yield();
   }
 }
 
@@ -235,9 +272,13 @@ void NetworkController::_handleImprovConnected(const char* ssid, const char* pas
 {
   YBP.printf("Improv Successful: %s / %s\n", ssid, password);
 
+  // save our creds
   strncpy(_cfg.wifi_mode, "client", sizeof(_cfg.wifi_mode));
   strncpy(_cfg.wifi_ssid, ssid, sizeof(_cfg.wifi_ssid));
   strncpy(_cfg.wifi_pass, password, sizeof(_cfg.wifi_pass));
+
+  // we're connected now.
+  _cfg.is_first_boot = false;
 
   char error[128];
   _cfg.saveConfig(error, sizeof(error));

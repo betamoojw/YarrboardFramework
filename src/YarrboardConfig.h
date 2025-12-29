@@ -96,6 +96,10 @@
     #define YB_USB_SERIAL 1
   #endif
 
+  #ifndef YB_BOOT_PIN
+    #define YB_BOOT_PIN 0
+  #endif
+
   #ifndef YB_MAX_CONTROLLERS
     #define YB_MAX_CONTROLLERS 30
   #endif

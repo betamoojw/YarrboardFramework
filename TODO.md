@@ -1,9 +1,5 @@
 ## v1.1
 
-* is_first_boot / improvwifi
-  * 
-  * if wifi does not connect, we should wait for a 5s press of boot, re-enable is_first_boot (or new variable like improve_finished = false)
-
 * global brightness
   * rgb controller -> setMaxBrightness()
   * onBrightness -> max * brightness
