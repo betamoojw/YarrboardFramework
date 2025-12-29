@@ -35,7 +35,5 @@ node_modules
 **.vscode
 /build
 examples/platformio/gulp
-examples/platformio/dist
-examples/platformio/temp
 Visual\ Micro
 *.gz.h
