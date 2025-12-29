@@ -168,8 +168,8 @@ void ConfigManager::generateBoardConfig(JsonVariant output)
   output["git_hash"] = GIT_HASH;
   output["build_time"] = BUILD_TIME;
 
-  for (auto& c : _app.getControllers()) {
-    c->generateConfigHook(output);
+  for (const auto& entry : _app.getControllers()) {
+    entry.controller->generateConfigHook(output);
   }
 }
 
@@ -410,8 +410,8 @@ bool ConfigManager::loadBoardConfigFromJSON(JsonVariant config, char* error, siz
   const char* v = config["name"] | _app.board_name;
   strlcpy(board_name, v, sizeof(board_name));
 
-  for (auto& c : _app.getControllers()) {
-    c->loadConfigHook(config, error, len);
+  for (const auto& entry : _app.getControllers()) {
+    entry.controller->loadConfigHook(config, error, len);
   }
 
   return result;

@@ -66,8 +66,8 @@ void ProtocolController::loop()
 
   // check to see if we need to send one.
   bool doFastUpdate = false;
-  for (auto& c : _app.getControllers()) {
-    if (c->needsFastUpdate()) {
+  for (const auto& entry : _app.getControllers()) {
+    if (entry.controller->needsFastUpdate()) {
       doFastUpdate = true;
       break;
     }
@@ -249,8 +249,8 @@ void ProtocolController::handleGetStats(JsonVariantConst input, JsonVariant outp
   else
     output["ip_address"] = WiFi.localIP();
 
-  for (auto& c : _app.getControllers()) {
-    c->generateStatsHook(output);
+  for (const auto& entry : _app.getControllers()) {
+    entry.controller->generateStatsHook(output);
   }
 }
 
@@ -259,8 +259,8 @@ void ProtocolController::handleGetUpdate(JsonVariantConst input, JsonVariant out
   output["msg"] = "update";
   output["uptime"] = esp_timer_get_time();
 
-  for (auto& c : _app.getControllers()) {
-    c->generateUpdateHook(output);
+  for (const auto& entry : _app.getControllers()) {
+    entry.controller->generateUpdateHook(output);
   }
 }
 
@@ -680,8 +680,8 @@ void ProtocolController::handleSetBrightness(JsonVariantConst input, JsonVariant
     // TODO: need to put this on a time delay
     // preferences.putFloat("brightness", globalBrightness);
 
-    for (auto& c : _app.getControllers()) {
-      c->updateBrightnessHook(brightness);
+    for (const auto& entry : _app.getControllers()) {
+      entry.controller->updateBrightnessHook(brightness);
     }
     sendBrightnessUpdate();
   } else
@@ -762,8 +762,8 @@ void ProtocolController::sendFastUpdate()
   output["fast"] = 1;
   output["uptime"] = esp_timer_get_time();
 
-  for (auto& c : _app.getControllers()) {
-    c->generateFastUpdateHook(output);
+  for (const auto& entry : _app.getControllers()) {
+    entry.controller->generateFastUpdateHook(output);
   }
 
   sendToAll(output, GUEST);

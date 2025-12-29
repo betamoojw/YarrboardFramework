@@ -27,26 +27,25 @@ YarrboardApp::YarrboardApp() : config(*this),
                                framerateAvg(10, 10000)
 
 {
-  registerController(debug);
-  registerController(config);
-  registerController(network);
-  registerController(ntp);
-  registerController(http);
-  registerController(protocol);
-  registerController(auth);
-  registerController(ota);
+  registerController(debug, 10);
+  registerController(config, 20);
+  registerController(network, 30);
+  registerController(ntp, 40);
+  registerController(http, 50);
+  registerController(protocol, 60);
+  registerController(auth, 70);
+  registerController(ota, 80);
+  registerController(mqtt, 200);
 }
 
 void YarrboardApp::setup()
 {
-  // register this here because it should be called last.
-  registerController(mqtt);
 
-  for (auto* c : _controllers) {
-    if (c->setup())
-      YBP.printf("✅ %s setup OK\n", c->getName());
+  for (const ControllerEntry& entry : _controllers) {
+    if (entry.controller->setup())
+      YBP.printf("✅ %s setup OK\n", entry.controller->getName());
     else
-      YBP.printf("❌ %s setup FAILED\n", c->getName());
+      YBP.printf("❌ %s setup FAILED\n", entry.controller->getName());
   }
 
   // we're done with startup log
@@ -65,9 +64,9 @@ void YarrboardApp::loop()
   // start our interval timer
   debug.it.start();
 
-  for (auto* c : _controllers) {
-    c->loop();
-    debug.it.time(c->getName());
+  for (const ControllerEntry& entry : _controllers) {
+    entry.controller->loop();
+    debug.it.time(entry.controller->getName());
   }
 
   // calculate our framerate
@@ -86,7 +85,8 @@ void YarrboardApp::loop()
 
 // Register a controller instance (non-owning).
 // Returns false if full or name duplicate.
-bool YarrboardApp::registerController(BaseController& controller)
+// Controllers are sorted by order (lower values run first).
+bool YarrboardApp::registerController(BaseController& controller, uint8_t order)
 {
   const char* n = controller.getName();
   if (!n || !*n)
@@ -101,7 +101,17 @@ bool YarrboardApp::registerController(BaseController& controller)
     return false;
   }
 
-  _controllers.push_back(&controller);
+  // Create new entry
+  ControllerEntry entry(&controller, order);
+
+  // Find insertion point to maintain sorted order
+  auto it = _controllers.begin();
+  while (it != _controllers.end() && it->order <= order) {
+    ++it;
+  }
+
+  // Insert at the correct position
+  _controllers.insert(it, entry);
   return true;
 }
 
@@ -111,9 +121,9 @@ BaseController* YarrboardApp::getController(const char* name)
   if (!name || !*name)
     return nullptr;
 
-  for (auto* c : _controllers) {
-    if (c && c->getName() && (std::strcmp(c->getName(), name) == 0)) {
-      return c;
+  for (const ControllerEntry& entry : _controllers) {
+    if (entry.controller && entry.controller->getName() && (std::strcmp(entry.controller->getName(), name) == 0)) {
+      return entry.controller;
     }
   }
   return nullptr;
@@ -131,8 +141,8 @@ bool YarrboardApp::removeController(const char* name)
     return false;
 
   for (size_t i = 0; i < _controllers.size(); i++) {
-    BaseController* c = _controllers[i];
-    if (c && c->getName() && (std::strcmp(c->getName(), name) == 0)) {
+    const ControllerEntry& entry = _controllers[i];
+    if (entry.controller && entry.controller->getName() && (std::strcmp(entry.controller->getName(), name) == 0)) {
       _controllers.erase(_controllers.begin() + i);
       return true;
     }

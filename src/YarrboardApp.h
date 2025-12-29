@@ -36,6 +36,17 @@
 class YarrboardApp
 {
   public:
+    struct ControllerEntry
+    {
+      BaseController* controller;
+      uint8_t order;
+
+      ControllerEntry() : controller(nullptr), order(0) {}
+      ControllerEntry(BaseController* c, uint8_t o) : controller(c), order(o) {}
+
+      bool operator<(const ControllerEntry& other) const { return order < other.order; }
+    };
+
     ConfigManager config;
     DebugController debug;
     NetworkController network;
@@ -87,15 +98,16 @@ class YarrboardApp
 
     // Register a controller instance (non-owning).
     // Returns false if full or name duplicate.
-    bool registerController(BaseController& controller);
+    // Controllers are sorted by order (lower values run first).
+    bool registerController(BaseController& controller, uint8_t order = 100);
 
     // Lookup by name (nullptr if not found)
     BaseController* getController(const char* name);
     const BaseController* getController(const char* name) const;
 
     // Return a read-only reference to the vector container.
-    // The vector itself is const (cannot resize), but the pointers inside are mutable.
-    const etl::vector<BaseController*, YB_MAX_CONTROLLERS>& getControllers() const { return _controllers; };
+    // The vector itself is const (cannot resize), but the entries inside are mutable.
+    const etl::vector<ControllerEntry, YB_MAX_CONTROLLERS>& getControllers() const { return _controllers; };
 
     // Remove by name (returns true if removed)
     bool removeController(const char* name);
@@ -117,7 +129,7 @@ class YarrboardApp
     unsigned long lastLoopMicros = 0;
     unsigned long lastLoopMillis = 0;
 
-    etl::vector<BaseController*, YB_MAX_CONTROLLERS> _controllers;
+    etl::vector<ControllerEntry, YB_MAX_CONTROLLERS> _controllers;
 };
 
 #endif /* YarrboardApp_h */

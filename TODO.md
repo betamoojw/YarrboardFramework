@@ -1,9 +1,5 @@
 ## v1.1
 
-* we need to add an order field to controllers or registerController() that determines how the setup / loop order.
-  * sort on add
-  * mqtt needs to be last
-
 * login, hello, logout are special commands.  would be nice to have them use the same command registry
   * problem is we need certain context specific things (mode, connection id, and role)
   * currently we have a chance of collisions if http api + websockets requests happen simulataneously.

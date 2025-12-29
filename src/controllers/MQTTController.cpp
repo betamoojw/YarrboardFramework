@@ -75,14 +75,14 @@ void MQTTController::loop()
   if (messageDelta >= 1000) {
     if (mqttClient.connected()) {
 
-      for (auto& c : _app.getControllers()) {
-        c->mqttUpdateHook(this);
+      for (const auto& entry : _app.getControllers()) {
+        entry.controller->mqttUpdateHook(this);
       }
 
       // separately update our Home Assistant status
       if (_cfg.app_enable_ha_integration) {
-        for (auto& c : _app.getControllers()) {
-          c->haUpdateHook(this);
+        for (const auto& entry : _app.getControllers()) {
+          entry.controller->haUpdateHook(this);
         }
       }
     }
@@ -198,8 +198,8 @@ void MQTTController::haDiscovery()
   // our components array
   JsonObject components = doc["cmps"].to<JsonObject>();
 
-  for (auto& c : _app.getControllers()) {
-    c->haGenerateDiscoveryHook(components, ha_dev_uuid, this);
+  for (const auto& entry : _app.getControllers()) {
+    entry.controller->haGenerateDiscoveryHook(components, ha_dev_uuid, this);
   }
 
   // dynamically allocate our buffer
