@@ -1,15 +1,14 @@
-## v1.1
-
-* figure out how to compile without nimbleble -> move to external dependency
+## v2.0
 
 * implement protocol over mqtt
 
 * more App.js functions:
   * addPage("page", "content", openCallback);
   * onOpenPage(page, callback);
-  * other app.* callbacks to register various things?
 
 ## Long Term
+
+* other app.* callbacks to register various things?
 
 * bug with reconnecting (eg ESP.restart not going down the hello path)
 
