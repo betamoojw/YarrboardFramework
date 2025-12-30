@@ -17,7 +17,7 @@
 #include "controllers/BaseController.h"
 #include <DNSServer.h>
 #include <ESPmDNS.h>
-#ifndef YB_DISABLE_IMPROV_BLE
+#ifdef IMPROV_WIFI_BLE_ENABLED
   #include <ImprovWiFiBLE.h>
 #endif
 #include <ImprovWiFiLibrary.h>
@@ -44,7 +44,7 @@ class NetworkController : public BaseController
   private:
     ImprovWiFi improvSerial;
 
-#ifndef YB_DISABLE_IMPROV_BLE
+#ifdef IMPROV_WIFI_BLE_ENABLED
     ImprovWiFiBLE improvBLE;
 #endif
 

@@ -207,7 +207,7 @@ void NetworkController::setupImprov()
   improvSerial.onImprovConnected(_onImprovConnectedStatic);
 
   // Bluetooth Configuration
-#ifndef YB_DISABLE_IMPROV_BLE
+#ifdef IMPROV_WIFI_BLE_ENABLED
   improvBLE.setDeviceInfo(ImprovTypes::ChipFamily::CF_ESP32,
     _cfg.board_name,
     _app.firmware_version,
@@ -220,8 +220,9 @@ void NetworkController::setupImprov()
 #endif
 
   // wait for improv to complete
-  while (_cfg.is_first_boot)
+  while (_cfg.is_first_boot) {
     improvSerial.handleSerial();
+  }
 
   // we're connected, so start us up.
   startServices();

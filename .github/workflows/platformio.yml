@@ -14,22 +14,23 @@ concurrency:
 
 jobs:
   build:
-    name: "pio:${{ matrix.board }}:${{ matrix.platform }}:${{ matrix.flags }}"
+    name: "pio:${{ matrix.target }}:${{ matrix.platform }}"
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
-        flags: ["-DFOO"]
         platform: [
           "stable"
         ]
-        board:
+        target:
           [
-            "esp32dev",
-            "esp32-s3-devkitc-1",
-            "esp32-c3-devkitc-02",
-            "esp32-c6-devkitc-1",
+            "usbcdc",
+            "noble",
+            "esp32-s2",
+            "esp32-s3",
+            "esp32-c3",
+            "esp32-c6",
           ]
 
     steps:
@@ -65,4 +66,4 @@ jobs:
       - name: Install Library
         run: pio lib -g install -f $GITHUB_WORKSPACE
 
-      - run: PIO_BOARD=${{ matrix.board }} PIO_PLATFORM="https://github.com/pioarduino/platform-espressif32/releases/download/${{ matrix.platform }}/platform-espressif32.zip" PLATFORMIO_BUILD_FLAGS="${{ matrix.flags }}" pio run -e ci
+      - run: PIO_PLATFORM="https://github.com/pioarduino/platform-espressif32/releases/download/${{ matrix.platform }}/platform-espressif32.zip" pio run -e ${{ matrix.target }}
