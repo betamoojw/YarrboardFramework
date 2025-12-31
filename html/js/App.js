@@ -9,16 +9,9 @@
 
     startCallbacks: [],
     messageHandlers: {},
-    pageOpenHandlers: {},
 
     onStart: function (callback) {
       YB.App.startCallbacks.push(callback);
-    },
-
-    onPageOpen: function (page, handler) {
-      if (!YB.App.pageOpenHandlers[page])
-        YB.App.pageOpenHandlers[page] = [];
-      YB.App.pageOpenHandlers[page].push(handler);
     },
 
     addMessageHandler: function (message, handler) {
@@ -75,17 +68,10 @@
 
     start: function () {
       // Setup all pages now that DOM is ready
-      for (let page of Object.values(YB.App.pages)) {
+      for (let page of Object.values(YB.App.pages))
         page.setup();
-      }
 
       YB.log.setupDebugTerminal();
-      // YB.log("User Agent: " + navigator.userAgent);
-      // YB.log("Window Width: " + window.innerWidth);
-      // YB.log("Window Height: " + window.innerHeight);
-      // YB.log("Window Location: " + window.location);
-      // YB.log("Device Pixel Ratio: " + window.devicePixelRatio);
-      // YB.log("Is canvas supported? " + YB.Util.isCanvasSupported());
 
       //main data connection
       YB.App.startWebsocket();
@@ -130,6 +116,7 @@
         YB.App.currentlyPickingBrightness = false;
       });
 
+      //event handlers for our settings forms
       $("#saveGeneralSettings").on('click', YB.App.saveGeneralSettings);
       $("#saveAuthenticationSettings").on('click', YB.App.saveAuthenticationSettings);
       $("#saveWebServerSettings").on('click', YB.App.saveWebServerSettings);
@@ -147,8 +134,15 @@
         }, 10);
       });
 
-      //run our start callbacks
-      for (cb of YB.App.startCallbacks)
+      //enter triggers login form
+      $(document).on('keypress', function (e) {
+        if (e.which == 13)
+          if (YB.App.currentPage == "login")
+            YB.App.doLogin();
+      });
+
+      //run our start callbacks - no contention on document.ready
+      for (let cb of YB.App.startCallbacks)
         cb();
     },
 
@@ -178,79 +172,21 @@
     openPage: function (page) {
       //YB.log(`opening ${page}`);
 
+      //look up our object
       let pageObj = YB.App.getPage(page);
       if (!pageObj) {
         YB.log(`No such page ${page}`);
         return;
       }
 
-      if (!pageObj.allowed(YB.App.role)) {
-        YB.log(`${page} not allowed for ${YB.App.role}`);
-        return;
-      }
-
+      //okay open it.
+      pageObj.open();
       YB.App.currentPage = page;
 
-      //request our stats.
-      if (page == "stats")
-        YB.App.getStatsData();
-
-      //request our control updates.
-      if (page == "control")
-        YB.App.startUpdateData();
-
+      //TODO: move this to the SendIt javascript calls
       //we need updates for adc config page.
       if (page == "config" && YB.App.config && YB.App.config.hasOwnProperty("adc"))
         YB.App.startUpdateData();
-
-      //hide all pages.
-      $("div.pageContainer").hide();
-
-      //special stuff
-      if (page == "login") {
-        //hide our nav bar
-        $("#navbar").hide();
-
-        //enter triggers login
-        $(document).on('keypress', function (e) {
-          if (e.which == 13)
-            YB.App.doLogin();
-        });
-      }
-
-      //sad to see you go.
-      if (page == "logout") {
-        Cookies.remove("username");
-        Cookies.remove("password");
-
-        YB.App.role = YB.App.defaultRole;
-        YB.App.updateRoleUI();
-
-        YB.client.logout();
-
-        if (YB.App.role == "nobody")
-          YB.App.openPage("login");
-        else
-          YB.App.openPage("control");
-      }
-      else {
-        //update our nav - remove active from all nav links first
-        $('#navbarLinks .nav-link').removeClass("active");
-        $(`#${page}Nav a`).addClass("active");
-
-        //call our onPageOpen handlers
-        const handlers = YB.App.pageOpenHandlers[YB.App.currentPage];
-        if (handlers) {
-          for (let handler of handlers) {
-            //only continue to show if we return true.
-            if (!handler())
-              return;
-          }
-        }
-
-        //is our new page ready?
-        YB.App.onPageReady();
-      }
     },
 
     isMFD: function () {
@@ -413,18 +349,7 @@
       }
     },
 
-    onPageReady: function () {
-      //is our page ready yet?
-      let page = YB.App.getPage(YB.App.currentPage);
-      if (page && page.ready) {
-        $("#loading").hide();
-        $(`#${YB.App.currentPage}Page`).show();
-      }
-      else {
-        $("#loading").show();
-        setTimeout(YB.App.onPageReady, 100);
-      }
-    },
+
 
     getStatsData: function () {
       if (YB.client.isOpen() && (YB.App.role == 'guest' || YB.App.role == 'admin')) {
@@ -440,10 +365,8 @@
 
     startUpdateData: function () {
       if (!YB.App.updateIntervalId) {
-        //YB.log("starting updates");
+        // YB.log("starting updates");
         YB.App.updateIntervalId = setInterval(YB.App.getUpdateData, YB.App.updateInterval);
-      } else {
-        //YB.log("updates already running");
       }
     },
 
@@ -1230,29 +1153,6 @@
 
       YB.ChannelRegistry.updateAllChannels(msg);
 
-      //update our clock.
-      // let mytime = Date.parse(msg.time);
-      // if (mytime)
-      // {
-      //   let mydate = new Date(mytime);
-      //   $('#time').html(mydate.toLocaleString());
-      //   $('#time').show();
-      // }
-      // else
-      //   $('#time').hide();
-
-      // if (msg.uptime)
-      //   $("#uptime").html(YB.Util.secondsToDhms(Math.round(msg.uptime/1000000)));
-
-      //or maybe voltage
-      // if (msg.bus_voltage)
-      // {
-      //   $('#bus_voltage_main').html("Bus Voltage: " + msg.bus_voltage.toFixed(2) + "V");
-      //   $('#bus_voltage_main').show();
-      // }
-      // else
-      //   $('#bus_voltage_main').hide();
-
       if (YB.App.isMFD()) {
         $(".mfdShow").show()
         $(".mfdHide").hide()
@@ -1609,6 +1509,29 @@
       if (msg.brightness && !YB.App.currentlyPickingBrightness)
         $('#brightnessSlider').val(Math.round(msg.brightness * 100));
     },
+
+    loginPageCallback: function () {
+      //hide our nav bar
+      $("#navbar").hide();
+    },
+
+    logoutPageCallback: function () {
+      Cookies.remove("username");
+      Cookies.remove("password");
+
+      YB.App.role = YB.App.defaultRole;
+      YB.App.updateRoleUI();
+
+      YB.client.logout();
+
+      //delay since this is an onOpen callback of the logout page.
+      setTimeout(function () {
+        if (YB.App.role == "nobody")
+          YB.App.openPage("login");
+        else
+          YB.App.openPage("control");
+      }, 100);
+    },
   };
 
   //setup all of our message handlers.
@@ -1627,62 +1550,76 @@
   YB.App.addMessageHandler("set_brightness", YB.App.handleSetBrightnessMessage);
 
   // Create and add all pages
-  YB.App.addPage(new YB.Page({
+  let controlPage = new YB.Page({
     name: 'control',
     displayName: 'Control',
     permissionLevel: 'guest',
     showInNavbar: true,
     ready: false
-  }));
+  });
 
-  YB.App.addPage(new YB.Page({
+  controlPage.onOpen(YB.App.startUpdateData);
+  YB.App.addPage(controlPage);
+
+  let statsPage = new YB.Page({
     name: 'stats',
     displayName: 'Stats',
     permissionLevel: 'guest',
     showInNavbar: true,
     ready: false
-  }));
+  });
 
-  YB.App.addPage(new YB.Page({
+  statsPage.onOpen(YB.App.getStatsData);
+  YB.App.addPage(statsPage);
+
+  let configPage = new YB.Page({
     name: 'config',
     displayName: 'Config',
     permissionLevel: 'admin',
     showInNavbar: true,
     ready: false,
     content: `<form class="row g-3" id="ConfigForm"></form>`
-  }));
+  });
+  YB.App.addPage(configPage);
 
-  YB.App.addPage(new YB.Page({
+  let settingsPage = new YB.Page({
     name: 'settings',
     displayName: 'Settings',
     permissionLevel: 'admin',
     showInNavbar: true,
     ready: false
-  }));
+  });
+  YB.App.addPage(settingsPage);
 
-  YB.App.addPage(new YB.Page({
+  let systemPage = new YB.Page({
     name: 'system',
     displayName: 'System',
     permissionLevel: 'admin',
     showInNavbar: true,
     ready: true
-  }));
+  });
+  YB.App.addPage(systemPage);
 
-  YB.App.addPage(new YB.Page({
+  let loginPage = new YB.Page({
     name: 'login',
     displayName: 'Login',
     permissionLevel: 'nobody',
     showInNavbar: true,
     ready: true
-  }));
+  });
 
-  YB.App.addPage(new YB.Page({
+  loginPage.onOpen(YB.App.loginPageCallback);
+  YB.App.addPage(loginPage);
+
+  let logoutPage = new YB.Page({
     name: 'logout',
     displayName: 'Logout',
     permissionLevel: 'guest',
     showInNavbar: true,
     ready: true
-  }));
+  })
+  logoutPage.onOpen(YB.App.logoutPageCallback);
+  YB.App.addPage(logoutPage);
 
   // expose to global
   global.YB = YB;

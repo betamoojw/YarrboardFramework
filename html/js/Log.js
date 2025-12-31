@@ -88,6 +88,13 @@
         YB.log.consoleSendJSON();
       }
     });
+
+    // YB.log("User Agent: " + navigator.userAgent);
+    // YB.log("Window Width: " + window.innerWidth);
+    // YB.log("Window Height: " + window.innerHeight);
+    // YB.log("Window Location: " + window.location);
+    // YB.log("Device Pixel Ratio: " + window.devicePixelRatio);
+    // YB.log("Is canvas supported? " + YB.Util.isCanvasSupported());
   }
 
   // expose to global

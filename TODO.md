@@ -1,16 +1,6 @@
 ## v2.0
 
-* App.onPageOpen -> Page.onOpen();
-* convert other pages to onPageOpen()
-  * control
-  * stats
-  * config
-  * settings
-  * system
-  * login
-  * logout
-* onOpen()
-  * pass in our page object to the call (this)
+* guest/admin login doesnt work when on the #logout page -> wont redirect
 * move stuff from YB.start to onStart callbacks where it makes sense.
 
 * addMessageHandler -> onMessage (homogenize)

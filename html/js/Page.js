@@ -13,6 +13,8 @@
     this.content = config.content !== undefined ? config.content : null;
     this.position = config.position !== undefined ? config.position : "last";
 
+    this.openCallbacks = [];
+
     // Store reference to content div and navbar entry if they already exist
     this._contentDiv = null;
     this._navbarEntry = null;
@@ -26,6 +28,44 @@
     //setup our content div
     if (this.content)
       this.setContent(this.content);
+  };
+
+  YB.Page.prototype.onOpen = function (callback) {
+    this.openCallbacks.push(callback);
+  };
+
+  YB.Page.prototype.open = function () {
+
+    if (!this.allowed(YB.App.role)) {
+      YB.log(`${page} not allowed for ${YB.App.role}`);
+      return;
+    }
+
+    //update our nav - remove active from all nav links first
+    $('#navbarLinks .nav-link').removeClass("active");
+    $(`#${this.name}Nav a`).addClass("active");
+
+    //hide all pages, we will show this one when its ready.
+    $("div.pageContainer").hide();
+
+    //run our start callbacks
+    for (let cb of this.openCallbacks)
+      cb(this);
+
+    //waits until page is ready to open.
+    this.openWhenReady();
+  };
+
+  YB.Page.prototype.openWhenReady = function () {
+    //are we ready yet?
+    if (this.ready) {
+      $("#loading").hide();
+      $(`#${this.name}Page`).show();
+    }
+    else {
+      $("#loading").show();
+      setTimeout(() => this.openWhenReady(), 100);
+    }
   };
 
   // Add a content div to the page

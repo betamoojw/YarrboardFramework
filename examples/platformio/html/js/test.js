@@ -8,7 +8,7 @@ YB.App.onStart(function () {
 });
 
 //example page open callback
-YB.App.onPageOpen("stats", function () {
+YB.App.getPage("stats").onOpen(function () {
   console.log("Stats Page Opened");
   return true;
 });
