@@ -1,7 +1,7 @@
 {
   "name": "YarrboardFramework",
-  "version": "1.0.0",
-  "description": "Framework for esp32 with http, sockets, MQTT and more",
+  "version": "2.0.0",
+  "description": "Framework for esp32 with http, websockets, MQTT and more",
   "keywords": "network,http,https,tcp,ssl,tls,websocket,espasyncwebserver",
   "repository": {
     "type": "git",
@@ -55,11 +55,6 @@
     {
       "owner": "chrisjoyce911",
       "name": "esp32FOTA",
-      "version": "*"
-    },
-    {
-      "owner": "h2zero",
-      "name": "NimBLE-Arduino",
       "version": "*"
     },
     {

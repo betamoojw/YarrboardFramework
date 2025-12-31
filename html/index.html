@@ -24,6 +24,7 @@
 
     <script src="js/Log.js"></script>
     <script src="js/Util.js"></script>
+    <script src="js/Page.js"></script>
     <script src="js/App.js"></script>
     <script src="js/ChannelRegistry.js"></script>
     <script src="js/channels/BaseChannel.js"></script>
@@ -48,33 +49,7 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav align-items-center">
-                        <li id="controlNav" class="nav-item nav-permission">
-                            <a class="nav-link active" onclick="YB.App.openPage('control')" aria-current="page"
-                                href="#control">Control</a>
-                        </li>
-                        <li id="statsNav" class="nav-item nav-permission">
-                            <a class="nav-link" onclick="YB.App.openPage('stats')" href="#stats">Status</a>
-                        </li>
-                        <!-- <li id="graphsNav" class="nav-item nav-permission mfdHide" style="display: none">
-                            <a class="nav-link" onclick="YB.App.openPage('graphs')" href="#graphs">Graphs</a>
-                        </li> -->
-                        <li id="configNav" class="nav-item nav-permission">
-                            <a class="nav-link" onclick="YB.App.openPage('config')" href="#config">Config</a>
-                        </li>
-                        <li id="settingsNav" class="nav-item nav-permission">
-                            <a class="nav-link" onclick="YB.App.openPage('settings')" href="#settings">Settings</a>
-                        </li>
-                        <li id="systemNav" class="nav-item nav-permission">
-                            <a class="nav-link" onclick="YB.App.openPage('system')" href="#system">System</a>
-                        </li>
-                        <li id="loginNav" class="nav-item" style="display: none">
-                            <a class="nav-link" onclick="YB.App.openPage('login')" href="#login">Login</a>
-                        </li>
-                        <li id="logoutNav" class="nav-item" style="display: none">
-                            <a class="nav-link" onclick="YB.App.openPage('logout')" href="#logout">Logout</a>
-                        </li>
-                    </ul>
+                    <ul id="navbarLinks" class="navbar-nav align-items-center"></ul>
                 </div>
             </div>
         </nav>
@@ -86,14 +61,6 @@
             </div>
             <div class="mx-3 mt-3">
                 <div id="liveAlertPlaceholder"></div>
-                <div id="controlPage" class="pageContainer row" style="display:none">
-                </div>
-                <div id="configPage" class="pageContainer" style="display:none">
-                    <form class="row g-3" id="ConfigForm">
-                    </form>
-                </div>
-                <div id="graphsPage" class="pageContainer" style="display:none">
-                </div>
                 <div id="statsPage" class="pageContainer" style="display:none">
                     <div class="row">
                         <div class="col-sm" id="statsContainer">

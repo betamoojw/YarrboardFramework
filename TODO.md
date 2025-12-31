@@ -1,11 +1,23 @@
 ## v2.0
 
-* more App.js functions:
-  * addPage("page", "content");
+  * convert other pages to onPageOpen()
+    * control
+    * stats
+    * config
+    * settings
+    * system
+    * login
+    * logout
+* onPageOpen()
+  * pass in our page object
+  * overwrites previous page with that name.
+* add onStart(callback) to YB.App, better hook than dom onready.
 
 ## Long Term
 
 * other app.* callbacks to register various things?
+  * addMessageHandler -> onMessage (homogenize)
+  * onMessage -> messageHandler (homogenize)
 
 * bug with reconnecting (eg ESP.restart not going down the hello path)
 

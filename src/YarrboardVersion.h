@@ -13,7 +13,7 @@
 #pragma once
 
 /** Major version number (X.x.x) */
-#define YARRBOARD_VERSION_MAJOR 1
+#define YARRBOARD_VERSION_MAJOR 2
 /** Minor version number (x.X.x) */
 #define YARRBOARD_VERSION_MINOR 0
 /** Patch version number (x.x.X) */

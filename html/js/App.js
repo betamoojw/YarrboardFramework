@@ -39,6 +39,22 @@
       }
     },
 
+    addPage: function (page) {
+      YB.App.pages[page.name] = page;
+    },
+
+    getPage: function (name) {
+      return YB.App.pages[name] || null;
+    },
+
+    removePage: function (name) {
+      let page = YB.App.getPage(name);
+      if (page) {
+        page.remove();
+        delete YB.App.pages[name];
+      }
+    },
+
     updateInterval: 500,
     updateIntervalId: null,
 
@@ -48,42 +64,16 @@
     defaultRole: "nobody",
 
     currentPage: null,
-    pageList: ["control", "config", "stats", "network", "settings", "system"],
-    pageReady: {
-      "control": false,
-      "config": false,
-      "stats": false,
-      "network": false,
-      "settings": false,
-      "system": true,
-      "login": true
-    },
-
-    pagePermissions: {
-      "nobody": [
-        "login"
-      ],
-      "admin": [
-        "control",
-        "config",
-        "stats",
-        "network",
-        "settings",
-        "system",
-        "login",
-        "logout"
-      ],
-      "guest": [
-        "control",
-        "stats",
-        "login",
-        "logout"
-      ]
-    },
+    pages: {},
 
     currentlyPickingBrightness: false,
 
     start: function () {
+      // Setup all pages now that DOM is ready
+      for (let page of Object.values(YB.App.pages)) {
+        page.setup();
+      }
+
       YB.log.setupDebugTerminal();
       // YB.log("User Agent: " + navigator.userAgent);
       // YB.log("Window Width: " + window.innerWidth);
@@ -179,7 +169,13 @@
     openPage: function (page) {
       //YB.log(`opening ${page}`);
 
-      if (!YB.App.pagePermissions[YB.App.role].includes(page)) {
+      let pageObj = YB.App.getPage(page);
+      if (!pageObj) {
+        YB.log(`No such page ${page}`);
+        return;
+      }
+
+      if (!pageObj.allowed(YB.App.role)) {
         YB.log(`${page} not allowed for ${YB.App.role}`);
         return;
       }
@@ -230,14 +226,16 @@
       }
       else {
         //update our nav - remove active from all nav links first
-        $('.navbar-nav .nav-link').removeClass("active");
+        $('#navbarLinks .nav-link').removeClass("active");
         $(`#${page}Nav a`).addClass("active");
 
         //call our onPageOpen handlers
         const handlers = YB.App.pageOpenHandlers[YB.App.currentPage];
         if (handlers) {
           for (let handler of handlers) {
-            handler();
+            //only continue to show if we return true.
+            if (!handler())
+              return;
           }
         }
 
@@ -408,7 +406,8 @@
 
     onPageReady: function () {
       //is our page ready yet?
-      if (YB.App.pageReady[YB.App.currentPage]) {
+      let page = YB.App.getPage(YB.App.currentPage);
+      if (page && page.ready) {
         $("#loading").hide();
         $(`#${YB.App.currentPage}Page`).show();
       }
@@ -975,22 +974,16 @@
     },
 
     updateRoleUI: function () {
-      //what nav tabs should we be able to see?
-      if (YB.App.role == "admin") {
-        $("#navbar").show();
-        $(".nav-permission").show();
-      }
-      else if (YB.App.role == "guest") {
-        $("#navbar").show();
-        $(".nav-permission").hide();
-        YB.App.pagePermissions[YB.App.role].forEach((page) => {
-          $(`#${page}Nav`).show();
-        });
-      }
-      else {
-        $("#navbar").hide();
-        $(".nav-permission").hide();
-      }
+      // Hide all nav items first
+      $("#navbarLinks .nav-item").hide();
+
+      // Show pages based on permissions
+      Object.keys(YB.App.pages).forEach((pageName) => {
+        let page = YB.App.pages[pageName];
+        if (page.allowed(YB.App.role)) {
+          $(`#${pageName}Nav`).show();
+        }
+      });
 
       //show login or not?
       $('#loginNav').hide();
@@ -1005,6 +998,9 @@
         $('#logoutNav').show();
       if (YB.App.defaultRole == 'guest' && YB.App.role == 'admin')
         $('#logoutNav').show();
+
+      //show our navbar now.
+      $('#navbar').show();
     },
 
     openDefaultPage: function () {
@@ -1012,7 +1008,7 @@
         //check to see if we want a certain page
         if (window.location.hash) {
           let page = window.location.hash.substring(1);
-          if (page != "login" && YB.App.pageList.includes(page))
+          if (page != "login" && YB.App.getPage(page))
             YB.App.openPage(page);
           else
             YB.App.openPage("control");
@@ -1207,7 +1203,9 @@
       YB.Util.populateMelodySelector($("#startup_melody"));
 
       //ready!
-      YB.App.pageReady.config = true;
+      let configPage = YB.App.getPage('config');
+      if (configPage)
+        configPage.ready = true;
 
       if (!YB.App.currentPage)
         YB.App.openPage('control');
@@ -1255,7 +1253,9 @@
         $(".mfdHide").show()
       }
 
-      YB.App.pageReady.control = true;
+      let controlPage = YB.App.getPage('control');
+      if (controlPage)
+        controlPage.ready = true;
     },
 
     handleStatsMessage: function (msg) {
@@ -1344,7 +1344,9 @@
       else
         $("#fan_rpm_row").remove();
 
-      YB.App.pageReady.stats = true;
+      let statsPage = YB.App.getPage('stats');
+      if (statsPage)
+        statsPage.ready = true;
     },
 
     handleFullConfigMessage: function (msg) {
@@ -1433,7 +1435,9 @@
       $("#wifi_pass").val(msg.wifi_pass);
       $("#local_hostname").val(msg.local_hostname);
 
-      YB.App.pageReady.network = true;
+      let networkPage = YB.App.getPage('network');
+      if (networkPage)
+        networkPage.ready = true;
     },
 
     handleAppConfigMessage: function (msg) {
@@ -1512,7 +1516,9 @@
         }
       });
 
-      YB.App.pageReady.settings = true;
+      let settingsPage = YB.App.getPage('settings');
+      if (settingsPage)
+        settingsPage.ready = true;
     },
 
     handleOTAProgressMessage: function (msg) {
@@ -1594,7 +1600,6 @@
       if (msg.brightness && !YB.App.currentlyPickingBrightness)
         $('#brightnessSlider').val(Math.round(msg.brightness * 100));
     },
-
   };
 
   //setup all of our message handlers.
@@ -1611,6 +1616,64 @@
   YB.App.addMessageHandler("login", YB.App.handleLoginMessage);
   YB.App.addMessageHandler("set_theme", YB.App.handleSetThemeMessage);
   YB.App.addMessageHandler("set_brightness", YB.App.handleSetBrightnessMessage);
+
+  // Create and add all pages
+  YB.App.addPage(new YB.Page({
+    name: 'control',
+    displayName: 'Control',
+    permissionLevel: 'guest',
+    showInNavbar: true,
+    ready: false
+  }));
+
+  YB.App.addPage(new YB.Page({
+    name: 'stats',
+    displayName: 'Stats',
+    permissionLevel: 'guest',
+    showInNavbar: true,
+    ready: false
+  }));
+
+  YB.App.addPage(new YB.Page({
+    name: 'config',
+    displayName: 'Config',
+    permissionLevel: 'admin',
+    showInNavbar: true,
+    ready: false,
+    content: `<form class="row g-3" id="ConfigForm"></form>`
+  }));
+
+  YB.App.addPage(new YB.Page({
+    name: 'settings',
+    displayName: 'Settings',
+    permissionLevel: 'admin',
+    showInNavbar: true,
+    ready: false
+  }));
+
+  YB.App.addPage(new YB.Page({
+    name: 'system',
+    displayName: 'System',
+    permissionLevel: 'admin',
+    showInNavbar: true,
+    ready: false
+  }));
+
+  YB.App.addPage(new YB.Page({
+    name: 'login',
+    displayName: 'Login',
+    permissionLevel: 'nobody',
+    showInNavbar: true,
+    ready: true
+  }));
+
+  YB.App.addPage(new YB.Page({
+    name: 'logout',
+    displayName: 'Logout',
+    permissionLevel: 'guest',
+    showInNavbar: true,
+    ready: true
+  }));
 
   // expose to global
   global.YB = YB;
