@@ -86,3 +86,9 @@ hr.bold {
     font-family: 'Fira Code', 'Courier New', monospace;
     font-size: 12px;
 }
+
+.expandable th:hover,
+span.expandable:hover {
+    cursor: pointer;
+    text-decoration: underline dotted;
+}

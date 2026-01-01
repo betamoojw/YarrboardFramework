@@ -1,7 +1,7 @@
 ## v2.0
 
-* add + icons to the expandable info on stats.
 * flesh out test.js and rename
+* figure out a better solution for tracking intervals than resetting every send.
 
 ## Long Term
 

@@ -75,7 +75,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="table-group-divider">
-                                    <tr class="uptime" onclick="$('#last_reboot').toggle()">
+                                    <tr class="uptime expandable" onclick="$('#last_reboot').toggle()">
                                         <th scope="row">Uptime</th>
                                         <td id="uptime" class="text-end"></td>
                                     </tr>
@@ -127,7 +127,7 @@
                                         <th scope="row">MQTT Server</th>
                                         <td id="mqtt_status" class="text-end"></td>
                                     </tr>
-                                    <tr onclick="$('#other_versions').toggle()">
+                                    <tr class="expandable" onclick="$('#other_versions').toggle()">
                                         <th scope="row">Firmware Version</th>
                                         <td id="firmware_version" class="text-end"></td>
                                     </tr>
@@ -194,7 +194,7 @@
                                         <th scope="row">Fan RPMs</th>
                                         <td id="fan_rpm" class="text-end"></td>
                                     </tr>
-                                    <tr onclick="$('#loop_speed').toggle()">
+                                    <tr class="expandable" onclick="$('#loop_speed').toggle()">
                                         <th scope="row">Loop Speed</th>
                                         <td id="fps" class="text-end"></td>
                                     </tr>
@@ -214,7 +214,7 @@
                                             </div>
                                         </td>
                                     </tr>
-                                    <tr onclick="$('#message_stats').toggle()">
+                                    <tr class="expandable" onclick="$('#message_stats').toggle()">
                                         <th scope="row">Messages</th>
                                         <td id="sent_message_total_main" class="text-end"></td>
                                     </tr>
@@ -260,7 +260,7 @@
                                             </div>
                                         </td>
                                     </tr>
-                                    <tr onclick="$('#memory_stats').toggle()">
+                                    <tr class="expandable" onclick="$('#memory_stats').toggle()">
                                         <th scope="row">Memory Usage</th>
                                         <td class="align-middle">
                                             <div id="memory_usage" class="progress" role="progressbar"
@@ -292,7 +292,6 @@
                                             </table>
                                         </td>
                                     </tr>
-
                                     <tr>
                                         <th scope="row">Unique ID</th>
                                         <td id="uuid" class="text-end"></td>
@@ -721,7 +720,7 @@
                 </div>
                 <div id="copyright">
                     <a id="projectName" href="https://github.com/hoeken/yarrboard">Yarrboard</a> &copy; <span
-                        onclick="$('#debug_log').toggle()" id="year">2025</span><br>
+                        class="expandable" onclick="$('#debug_log').toggle()" id="year">2025</span><br>
                 </div>
             </div>
             <div id="debug_log" style="display: none">
