@@ -23,6 +23,8 @@ OTAController::OTAController(YarrboardApp& app) : BaseController(app, "ota")
 
 bool OTAController::setup()
 {
+  _instance = this; // Capture the instance for callbacks
+
   _app.protocol.registerCommand(ADMIN, "ota_start", this, &OTAController::handleOTAStart);
 
   if (_cfg.app_enable_ota) {
