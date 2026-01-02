@@ -1,8 +1,7 @@
 ## v2.0
 
-* move public key out of OTAController.h and make configurable
 * update changelog
-* update yarrboard-firmware to v2.0.0
+* update yarrboard-firmware to use v2.0.0
 * make release
 
 ## Long Term

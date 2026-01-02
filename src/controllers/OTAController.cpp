@@ -34,21 +34,25 @@ bool OTAController::setup()
 
   FOTA = new esp32FOTA(_app.hardware_version, _app.firmware_version, validate_firmware);
 
-  if (strlen(firmware_manifest_url)) {
-    FOTA->setManifestURL(firmware_manifest_url);
-    FOTA->setPubKey(MyPubKey);
-    FOTA->useBundledCerts();
-
-    FOTA->setUpdateBeginFailCb(_updateBeginFailCallbackStatic);
-    FOTA->setProgressCb(_progressCallbackStatic);
-    FOTA->setUpdateEndCb(_updateEndCallbackStatic);
-    FOTA->setUpdateCheckFailCb(_updateCheckFailCallbackStatic);
-
-    return true;
-  } else {
-    YBP.println("No firmware_manifest_url set, disabling OTA firmware downloading.");
+  if (!strlen(firmware_manifest_url)) {
+    YBP.println("No ota.firmware_manifest_url set, disabling OTA firmware downloading.");
     return false;
   }
+
+  FOTA->setManifestURL(firmware_manifest_url);
+
+  if (strlen(public_key))
+    FOTA->setPubKey(MyPubKey);
+  else
+    YBP.println("⚠️ No ota.public_key set, will not check firmware signature.");
+
+  FOTA->useBundledCerts();
+  FOTA->setUpdateBeginFailCb(_updateBeginFailCallbackStatic);
+  FOTA->setProgressCb(_progressCallbackStatic);
+  FOTA->setUpdateEndCb(_updateEndCallbackStatic);
+  FOTA->setUpdateCheckFailCb(_updateCheckFailCallbackStatic);
+
+  return true;
 }
 
 void OTAController::loop()
