@@ -26,7 +26,6 @@ jobs:
         target:
           [
             "usbcdc",
-            "noble",
             "esp32-s2",
             "esp32-s3",
             "esp32-c3",

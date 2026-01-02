@@ -20,13 +20,17 @@ YarrboardApp yba;
 // setup for our buzzer / piezo (if present)
 // is_active:  true = monotone, false = pwm tones
 #include <controllers/BuzzerController.h>
-#define YB_BUZZER_PIN       39
+#ifndef YB_BUZZER_PIN
+  #define YB_BUZZER_PIN 39
+#endif
 #define YB_BUZZER_IS_ACTIVE false
 BuzzerController buzzer(yba);
 
 // setup for our indicator LED (if present)
 #include <controllers/RGBController.h>
-#define YB_STATUS_RGB_PIN   38
+#ifndef YB_STATUS_RGB_PIN
+  #define YB_STATUS_RGB_PIN 38
+#endif
 #define YB_STATUS_RGB_ORDER GRB
 #define YB_STATUS_RGB_COUNT 1
 RGBController<WS2812B, YB_STATUS_RGB_PIN, YB_STATUS_RGB_ORDER> rgb(yba, YB_STATUS_RGB_COUNT);
