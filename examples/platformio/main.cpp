@@ -37,7 +37,7 @@ void setup()
 
   yba.board_name = "Framework Test";
   yba.default_hostname = "yarrboard";
-  yba.firmware_version = "1.2.3";
+  yba.firmware_version = YARRBOARD_VERSION_STR;
   yba.hardware_version = "REV_A_B_C";
   yba.manufacturer = "Test Manufacturer";
   yba.hardware_url = "http://example.com/my-hardware-page";
