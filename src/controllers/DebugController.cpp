@@ -114,6 +114,13 @@ bool DebugController::setup()
   return true;
 }
 
+void DebugController::loop()
+{
+  // reset our loop times every minute.
+  if (INTERVAL(60000))
+    it.reset();
+}
+
 void DebugController::generateStatsHook(JsonVariant output)
 {
   if (it.getEntries().empty())
@@ -132,8 +139,6 @@ void DebugController::generateStatsHook(JsonVariant output)
     entry["usec"] = avg_us;
     entry["count"] = e.count;
   }
-
-  it.reset();
 }
 
 void DebugController::handleCrashMe(JsonVariantConst input, JsonVariant output)

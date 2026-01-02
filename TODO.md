@@ -1,6 +1,6 @@
 ## v2.0
 
-* figure out a better solution for tracking intervals than resetting every send.
+* 
 * get firmware release working
 
 ## Long Term

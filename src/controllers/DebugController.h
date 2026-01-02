@@ -27,6 +27,7 @@ class DebugController : public BaseController
     IntervalTimer it;
 
     bool setup() override;
+    void loop() override;
     void generateStatsHook(JsonVariant output) override;
 
     void handleCrashMe(JsonVariantConst input, JsonVariant output);
