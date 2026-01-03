@@ -1,6 +1,5 @@
 ## v2.0
 
-* update changelog
 * make release
 
 ## Long Term
