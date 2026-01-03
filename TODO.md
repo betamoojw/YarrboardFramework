@@ -1,7 +1,3 @@
-## v2.0
-
-* make release
-
 ## Long Term
 
 * add notification badge functionality to pages
