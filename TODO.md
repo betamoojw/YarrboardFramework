@@ -1,20 +1,17 @@
 ## v2.1
 
-* add github repo url and link to git hash
-
-* add notification badge functionality to pages
-
-* when changing wifi fails, reconnect to original network.
+* consolidate config and settings
+  * create addSettingsPanel() similar to addPage() but with settings content.
+  * very basic - just name, title, and content
 
 * get espwebtools integrated for first firmware upload
-  * modify release script to add firmwares to the release script.
+  * modify release script to add firmwares to the espwebtools manifest.
   * keep all previous firmwares for rollback potential
-
-* other app.* callbacks to register various things?
-  * consolidate config and settings
-    * addSettings() similar to addPage() but with settings content.
+  * create a hostable page with improv wifi + esp web tools that points to our manifest
 
 * bug with reconnecting (eg ESP.restart not going down the hello path)
+  * all queued messages should wait until the connection is authenticated and ready
+  * get_stats / get_update should not jam the queue
 
 ## Long Term
 

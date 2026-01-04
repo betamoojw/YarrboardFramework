@@ -166,10 +166,10 @@ void ConfigManager::generateBoardConfig(JsonVariant output)
   output["arduino_version"] = ESP_ARDUINO_VERSION_STR;
   output["psychic_http_version"] = PSYCHIC_VERSION_STR;
   output["yarrboard_framework_version"] = YARRBOARD_VERSION_STR;
-#ifdef GIT_HASH:
+#ifdef GIT_HASH
   output["git_hash"] = GIT_HASH;
 #endif
-#ifdef BUILD_TIME:
+#ifdef BUILD_TIME
   output["build_time"] = BUILD_TIME;
 #endif
 

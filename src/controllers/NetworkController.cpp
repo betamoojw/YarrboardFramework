@@ -116,6 +116,7 @@ bool NetworkController::connectToWifi(const char* ssid, const char* pass)
   // reset our wifi to a clean state
   if (WiFi.isConnected()) {
     WiFi.mode(WIFI_STA);
+    WiFi.setAutoReconnect(false); // Stop auto-reconnect attempts
     WiFi.disconnect(true, true);
     WiFi.mode(WIFI_OFF);
     delay(100);
@@ -162,7 +163,9 @@ bool NetworkController::connectToWifi(const char* ssid, const char* pass)
   }
 
   YBP.println("\n[WiFi] WiFi failed to connect");
+  WiFi.setAutoReconnect(false); // Stop auto-reconnect attempts
   WiFi.disconnect(true, true);
+  WiFi.mode(WIFI_OFF);
 
   _app.setStatusColor(CRGB::Red);
 
@@ -193,6 +196,7 @@ void NetworkController::setupImprov()
   device_url.concat(".local");
 
   WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(false); // Stop auto-reconnect attempts
   WiFi.disconnect();
 
   // Serial Configuration
@@ -262,6 +266,7 @@ void NetworkController::_handleImprovError(ImprovTypes::Error err)
 
   // reset our wifi.
   WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(false); // Stop auto-reconnect attempts
   WiFi.disconnect(true, true);
   WiFi.mode(WIFI_OFF);
   delay(250);
