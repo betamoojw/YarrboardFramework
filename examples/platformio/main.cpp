@@ -47,6 +47,7 @@ void setup()
   yba.hardware_url = "http://example.com/my-hardware-page";
   yba.project_name = "Yarrboard Framework";
   yba.project_url = "https://github.com/hoeken/YarrboardFramework";
+  yba.git_url = "https://github.com/hoeken/YarrboardFramework";
 
   // OTA updates configuration.  Firmware can poll the url and download its own OTA updates.
   yba.ota.firmware_manifest_url = "https://raw.githubusercontent.com/hoeken/YarrboardFramework/main/releases/ota_manifest.json";

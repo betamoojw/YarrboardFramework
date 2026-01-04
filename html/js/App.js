@@ -1070,7 +1070,7 @@
       if (msg.has_coredump)
         YB.App.showAdminAlert(/*html*/ `
           <p>Oops, looks like Yarrboard crashed.</p>
-          <p>Please download the <a href="/coredump.bin" target="_blank">coredump</a> and report it to our <a href="{msg.github_url}/issues">Github Issue Tracker</a> along with the following information:</p>
+          <p>Please download the <a href="/coredump.bin" target="_blank">coredump</a> and report it to our <a href="{msg.git_url}/issues">Github Issue Tracker</a> along with the following information:</p>
           <ul><li>Firmware: ${msg.firmware_version}</li><li>Hardware: ${msg.hardware_version}</li></ul>
         `, "danger");
 
@@ -1102,8 +1102,8 @@
         if (is_dirty)
           short_hash += "-dirty";
 
-        if (msg.github_url)
-          $("#git_hash").html(`<a href="${msg.github_url}/commit/${clean_hash}">${short_hash}</a>`);
+        if (msg.git_url)
+          $("#git_hash").html(`<a href="${msg.git_url}/commit/${clean_hash}">${short_hash}</a>`);
         else
           $("#git_hash").html(`${short_hash}`);
       }

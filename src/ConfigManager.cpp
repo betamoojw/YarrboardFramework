@@ -161,13 +161,17 @@ void ConfigManager::generateBoardConfig(JsonVariant output)
   output["hardware_url"] = _app.hardware_url;
   output["project_name"] = _app.project_name;
   output["project_url"] = _app.project_url;
-  output["github_url"] = _app.github_url;
+  output["git_url"] = _app.git_url;
   output["esp_idf_version"] = esp_get_idf_version();
   output["arduino_version"] = ESP_ARDUINO_VERSION_STR;
   output["psychic_http_version"] = PSYCHIC_VERSION_STR;
   output["yarrboard_framework_version"] = YARRBOARD_VERSION_STR;
+#ifdef GIT_HASH:
   output["git_hash"] = GIT_HASH;
+#endif
+#ifdef BUILD_TIME:
   output["build_time"] = BUILD_TIME;
+#endif
 
   for (const auto& entry : _app.getControllers()) {
     entry.controller->generateConfigHook(output);
