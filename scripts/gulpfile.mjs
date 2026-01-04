@@ -347,7 +347,10 @@ async function clean() {
 }
 
 function buildInlineHtml() {
-    return src(join(PATHS.frameworkHtml, '*.html'))
+    const indexPath = join(PATHS.frameworkHtml, 'index.html');
+    console.log(`Building inline HTML from: ${indexPath}`);
+
+    return src(indexPath)
         .pipe(favicon({ src: PATHS.frameworkHtml }))
         .pipe(inline(INLINE_OPTIONS))
         .pipe(dest(PATHS.tempOutput));
