@@ -32,7 +32,7 @@ import inlineImages from 'gulp-css-base64';
 import favicon from 'gulp-base64-favicon';
 import { readFileSync, createWriteStream, readdirSync, existsSync, mkdirSync, statSync, rmSync } from 'fs';
 import { createHash } from 'crypto';
-import { join, basename, relative, dirname, extname } from 'path';
+import { join, basename, relative, dirname, sep } from 'path';
 import { lookup as mimeLookup } from 'mime-types';
 
 // ============================================================================
@@ -294,7 +294,8 @@ async function writeHeaderFile(source, destination, name, originalFilename) {
             wstream.write(`#include "GulpedFile.h"\n\n`);
 
             // Write the filename (URL-encoded, preserving directory separators)
-            const encodedFilename = originalFilename.split('/').map(segment => encodeURIComponent(segment)).join('/');
+            // Normalize path separators to forward slashes for URLs (works on all platforms)
+            const encodedFilename = originalFilename.split(sep).map(segment => encodeURIComponent(segment)).join('/');
             wstream.write(`const char _${name}_filename[] = "/${encodedFilename}";\n`);
 
             // Write the MIME type
