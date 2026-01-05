@@ -41,6 +41,13 @@ bool NetworkController::setup()
   return true;
 }
 
+void NetworkController::loop()
+{
+  if (_cfg.is_first_boot) {
+    improvSerial.handleSerial();
+  }
+}
+
 void NetworkController::setupWifi()
 {
   // which mode do we want?
@@ -224,12 +231,9 @@ void NetworkController::setupImprov()
 #endif
 
   // wait for improv to complete
-  while (_cfg.is_first_boot) {
-    improvSerial.handleSerial();
-  }
 
   // we're connected, so start us up.
-  startServices();
+  // startServices();
 }
 
 // ==========================================================

@@ -32,6 +32,7 @@ class NetworkController : public BaseController
     NetworkController(YarrboardApp& app);
 
     bool setup() override;
+    void loop() override;
 
     void setupImprov();
 

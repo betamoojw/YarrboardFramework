@@ -40,7 +40,6 @@ YarrboardApp::YarrboardApp() : config(*this),
 
 void YarrboardApp::setup()
 {
-
   for (const ControllerEntry& entry : _controllers) {
     if (entry.controller->setup())
       YBP.printf("✅ %s setup OK\n", entry.controller->getName());
@@ -61,6 +60,12 @@ void YarrboardApp::setup()
 
 void YarrboardApp::loop()
 {
+  // are we first boot? aka Improv mode?
+  if (config.is_first_boot) {
+    network.loop(); // Handle Improv serial communication
+    return;
+  }
+
   // start our interval timer
   debug.it.start();
 
