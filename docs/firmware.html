@@ -95,10 +95,10 @@
                             Select your board model and firmware version below, then click "Install" to flash firmware
                             directly from your browser via USB.
                         </p>
-                        <div class="alert alert-info" role="alert">
+                        <p class="card-text">
                             <strong>Requirements:</strong> Chrome, Edge, or Opera browser. Connect your board via USB
                             before clicking Install.
-                        </div>
+                        </p>
                     </div>
                 </div>
 
@@ -396,7 +396,7 @@
                 loadingState.classList.remove('spinner-container', 'd-flex', 'justify-content-center', 'align-items-center');
                 loadingState.innerHTML = `
                     <div class="alert alert-danger" role="alert">
-                        <strong>Error:</strong> Failed to load firmware manifest. Please try again later.
+                        <strong>Error:</strong> Failed to load firmware manifest. Please submit an issue.
                         <br><br>
                         <small>${error.message}</small>
                     </div>
