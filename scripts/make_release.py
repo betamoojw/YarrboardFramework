@@ -1,7 +1,40 @@
 #!/usr/bin/env python3
 
-import argparse, os, json, re, sys, subprocess
+import argparse, os, json, re, sys, subprocess, glob
 from pathlib import Path
+
+def generate_espwebtools_manifest(board_name, chip_family, version, firmware_url_base):
+	"""Generate ESP Web Tools manifest.json for a board"""
+	manifest = {
+		"name": f"{board_name} Firmware",
+		"version": version,
+		"home_assistant_domain": "yarrboard",
+		"new_install_prompt_erase": False,
+		"builds": [
+			{
+				"chipFamily": chip_family,
+				"parts": [
+					{
+						"path": "bootloader.bin",
+						"offset": 4096
+					},
+					{
+						"path": "partitions.bin",
+						"offset": 32768
+					},
+					{
+						"path": "boot_app0.bin",
+						"offset": 57344
+					},
+					{
+						"path": "firmware.bin",
+						"offset": 65536
+					}
+				]
+			}
+		]
+	}
+	return manifest
 
 # Change to repository root directory
 # This allows the script to work from scripts/ folder while operating on repo root
@@ -30,6 +63,19 @@ try:
 		if not signing_key_path:
 			print("🔴 No signing_key_path found in release_config.json 🔴")
 			sys.exit(1)
+
+		# Validate board configuration format
+		for board in boards:
+			if isinstance(board, dict):
+				if "name" not in board:
+					print("🔴 Board configuration missing 'name' field 🔴")
+					sys.exit(1)
+				if "chip_family" not in board:
+					print("🔴 Board configuration missing 'chip_family' field 🔴")
+					sys.exit(1)
+			else:
+				print("🔴 Board configuration must be an object with 'name' and 'chip_family' fields 🔴")
+				sys.exit(1)
 except json.JSONDecodeError as e:
 	print(f"🔴 Error parsing release_config.json: {e} 🔴")
 	sys.exit(1)
@@ -109,8 +155,7 @@ if __name__ == '__main__':
 		text=True
 	).strip()
 	if branch != "main":
-		print(f"🔴 You are on '{branch}', not 'main' 🔴")
-		sys.exit(1)   # bail out
+		print(f"⚠️ You are on '{branch}', not 'main' ⚠️")
 
 	config = []
 
@@ -133,58 +178,136 @@ if __name__ == '__main__':
 
 	print (f'Making firmware release for version {version}')
 
-	for board in boards:
-		print (f'Building {board} firmware')
+	for board_config in boards:
+		board_name = board_config['name']
+		chip_family = board_config['chip_family']
+
+		print (f'Building {board_name} firmware for {chip_family}')
 
 		#make our firmware.json entry
 		bdata = {}
-		bdata['type'] = board
+		bdata['type'] = board_name
 		bdata['version'] = version
-		bdata['url'] = f'{firmware_url_base}{board}/{board}-{version}.bin'
+		bdata['url'] = f'{firmware_url_base}{board_name}/{board_name}-{version}.bin'
 		bdata['changelog'] = changelog
 		config.append(bdata)
-		
+
 		#build the firmware
-		cmd = f'pio run -e "{board}" -s'
+		cmd = f'pio run -e "{board_name}" -s'
 		if test_mode:
 			print (cmd)
 		else:
 			os.system(cmd)
 
 		#sign the firmware
-		cmd = f'openssl dgst -sign {signing_key_path} -keyform PEM -sha256 -out .pio/build/{board}/firmware.sign -binary .pio/build/{board}/firmware.bin'
+		cmd = f'openssl dgst -sign {signing_key_path} -keyform PEM -sha256 -out .pio/build/{board_name}/firmware.sign -binary .pio/build/{board_name}/firmware.bin'
 		if test_mode:
 			print (cmd)
 		else:
 			os.system(cmd)
 
 		#combine the signatures
-		cmd = f'cat .pio/build/{board}/firmware.sign .pio/build/{board}/firmware.bin > .pio/build/{board}/signed.bin'
+		cmd = f'cat .pio/build/{board_name}/firmware.sign .pio/build/{board_name}/firmware.bin > .pio/build/{board_name}/signed.bin'
 		if test_mode:
 			print (cmd)
 		else:
 			os.system(cmd)
 
 		#create board-specific releases directory
-		board_dir = f'releases/{board}'
+		board_dir = f'releases/{board_name}'
 		if test_mode:
 			print(f'mkdir -p {board_dir}')
 		else:
 			os.makedirs(board_dir, exist_ok=True)
 
 		#copy our fimrware to releases directory
-		cmd = f'cp .pio/build/{board}/signed.bin {board_dir}/{board}-{version}.bin'
+		cmd = f'cp .pio/build/{board_name}/signed.bin {board_dir}/{board_name}-{version}.bin'
 		if test_mode:
 			print (cmd)
 		else:
 			os.system(cmd)
 
 		#keep our ELF file for debugging later on....
-		cmd = f'cp .pio/build/{board}/firmware.elf {board_dir}/{board}-{version}.elf'
+		cmd = f'cp .pio/build/{board_name}/firmware.elf {board_dir}/{board_name}-{version}.elf'
 		if test_mode:
 			print (cmd)
 		else:
 			os.system(cmd)
+
+		# --- ESP Web Tools support ---
+		print(f'Generating ESP Web Tools files for {board_name}')
+
+		# Create espwebtools directory
+		espwebtools_dir = f'releases/{board_name}-{version}-espwebtools'
+		if test_mode:
+			print(f'mkdir -p {espwebtools_dir}')
+		else:
+			os.makedirs(espwebtools_dir, exist_ok=True)
+
+		# Copy firmware binary (unsigned version for ESP Web Tools)
+		cmd = f'cp .pio/build/{board_name}/firmware.bin {espwebtools_dir}/firmware.bin'
+		if test_mode:
+			print(cmd)
+		else:
+			os.system(cmd)
+
+		# Copy bootloader
+		bootloader_path = f'.pio/build/{board_name}/bootloader.bin'
+		if test_mode:
+			print(f'cp {bootloader_path} {espwebtools_dir}/bootloader.bin')
+		else:
+			if Path(bootloader_path).exists():
+				os.system(f'cp {bootloader_path} {espwebtools_dir}/bootloader.bin')
+			else:
+				print(f'⚠️  Warning: bootloader.bin not found at {bootloader_path}')
+
+		# Copy partitions
+		partitions_path = f'.pio/build/{board_name}/partitions.bin'
+		if test_mode:
+			print(f'cp {partitions_path} {espwebtools_dir}/partitions.bin')
+		else:
+			if Path(partitions_path).exists():
+				os.system(f'cp {partitions_path} {espwebtools_dir}/partitions.bin')
+			else:
+				print(f'⚠️  Warning: partitions.bin not found at {partitions_path}')
+
+		# Copy boot_app0.bin from Arduino ESP32 framework
+		# This file is needed for OTA partition configurations
+		boot_app0_locations = [
+			Path.home() / '.platformio/packages/framework-arduinoespressif32/tools/partitions/boot_app0.bin',
+			Path.home() / '.platformio/packages/framework-arduinoespressif32@src-*/tools/partitions/boot_app0.bin'
+		]
+		boot_app0_copied = False
+		for boot_app0_path in boot_app0_locations:
+			if test_mode:
+				print(f'cp {boot_app0_path} {espwebtools_dir}/boot_app0.bin')
+				boot_app0_copied = True
+				break
+			else:
+				# Handle glob patterns for @src- versioned packages
+				if '*' in str(boot_app0_path):
+					matches = glob.glob(str(boot_app0_path))
+					if matches:
+						boot_app0_path = Path(matches[0])
+
+				if boot_app0_path.exists():
+					os.system(f'cp "{boot_app0_path}" {espwebtools_dir}/boot_app0.bin')
+					boot_app0_copied = True
+					break
+
+		if not boot_app0_copied and not test_mode:
+			print(f'⚠️  Warning: boot_app0.bin not found in Arduino ESP32 framework')
+
+		# Generate manifest.json
+		manifest = generate_espwebtools_manifest(board_name, chip_family, version, firmware_url_base)
+		manifest_json = json.dumps(manifest, indent=2)
+
+		if test_mode:
+			print(f'Writing manifest.json:\n{manifest_json}')
+		else:
+			with open(f'{espwebtools_dir}/manifest.json', 'w') as f:
+				f.write(manifest_json)
+			print(f'ESP Web Tools files created in {espwebtools_dir}')
 
 	#write our config json file
 	config_str = json.dumps(config, indent=4)
