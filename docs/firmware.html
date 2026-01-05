@@ -392,7 +392,9 @@
                 initDarkMode();
             } catch (error) {
                 console.error('Initialization error:', error);
-                document.getElementById('loadingState').innerHTML = `
+                const loadingState = document.getElementById('loadingState');
+                loadingState.classList.remove('spinner-container', 'd-flex', 'justify-content-center', 'align-items-center');
+                loadingState.innerHTML = `
                     <div class="alert alert-danger" role="alert">
                         <strong>Error:</strong> Failed to load firmware manifest. Please try again later.
                         <br><br>
