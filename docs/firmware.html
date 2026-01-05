@@ -86,7 +86,7 @@
             </div>
 
             <!-- Main Content (initially hidden) -->
-            <div id="mainContent" style="display: none;">
+            <div id="mainContent" class="col-lg-6 col-md-12 d-none">
                 <!-- Instructions Card -->
                 <div class="card mb-4">
                     <div class="card-body">
@@ -119,7 +119,7 @@
                 </div>
 
                 <!-- ESP Web Tools Install Button Container -->
-                <div id="installButtonContainer" style="display: none;">
+                <div id="installButtonContainer" class="d-none">
                     <esp-web-install-button id="installButton">
                         <button slot="activate" class="btn btn-primary btn-lg w-100">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
@@ -135,14 +135,14 @@
                 </div>
 
                 <!-- Warning for versions without ESP Web Tools support -->
-                <div id="noEspWebtoolsWarning" class="alert alert-warning version-warning" style="display: none;"
+                <div id="noEspWebtoolsWarning" class="alert alert-warning version-warning d-none"
                     role="alert">
                     <strong>Note:</strong> ESP Web Tools flashing is not available for this version.
                     Please select a newer version with browser-based flashing support.
                 </div>
 
                 <!-- Changelog Display -->
-                <div id="changelogContainer" class="card mt-4" style="display: none;">
+                <div id="changelogContainer" class="card mt-4 d-none">
                     <div class="card-body">
                         <h5 class="card-title">Changelog</h5>
                         <div id="changelogDisplay"></div>
@@ -308,13 +308,13 @@
             const changelogContainer = document.getElementById('changelogContainer');
 
             if (!markdownText) {
-                changelogContainer.style.display = 'none';
+                changelogContainer.classList.add('d-none');
                 return;
             }
 
             // Parse markdown and display
             changelogDisplay.innerHTML = marked.parse(markdownText);
-            changelogContainer.style.display = 'block';
+            changelogContainer.classList.remove('d-none');
         }
 
         // ============================================================
@@ -329,19 +329,19 @@
             installButton.setAttribute('manifest', manifestUrl);
 
             // Show the button
-            container.style.display = 'block';
+            container.classList.remove('d-none');
         }
 
         function hideInstallButton() {
-            document.getElementById('installButtonContainer').style.display = 'none';
+            document.getElementById('installButtonContainer').classList.add('d-none');
         }
 
         function showWarning() {
-            document.getElementById('noEspWebtoolsWarning').style.display = 'block';
+            document.getElementById('noEspWebtoolsWarning').classList.remove('d-none');
         }
 
         function hideWarning() {
-            document.getElementById('noEspWebtoolsWarning').style.display = 'none';
+            document.getElementById('noEspWebtoolsWarning').classList.add('d-none');
         }
 
         // ============================================================
@@ -358,7 +358,7 @@
                 // Reset version-dependent UI
                 hideInstallButton();
                 hideWarning();
-                document.getElementById('changelogContainer').style.display = 'none';
+                document.getElementById('changelogContainer').classList.add('d-none');
             });
 
             // Version selection
@@ -382,8 +382,8 @@
                 populateBoardDropdown();
 
                 // Hide loading, show content
-                document.getElementById('loadingState').style.display = 'none';
-                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('loadingState').classList.add('d-none');
+                document.getElementById('mainContent').classList.remove('d-none');
 
                 // Setup event listeners
                 setupEventListeners();
