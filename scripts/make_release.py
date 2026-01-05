@@ -5,6 +5,10 @@ from pathlib import Path
 
 def generate_espwebtools_manifest(board_name, chip_family, version, firmware_url_base):
 	"""Generate ESP Web Tools manifest.json for a board"""
+	# ESP32-S3, ESP32-C3, and ESP32-S2 require bootloader at offset 0
+	# Original ESP32 uses offset 0x1000 (4096)
+	bootloader_offset = 0 if chip_family in ["ESP32-S3", "ESP32-C3", "ESP32-S2"] else 4096
+
 	manifest = {
 		"name": f"{board_name} Firmware",
 		"version": version,
@@ -16,7 +20,7 @@ def generate_espwebtools_manifest(board_name, chip_family, version, firmware_url
 				"parts": [
 					{
 						"path": "bootloader.bin",
-						"offset": 4096
+						"offset": bootloader_offset
 					},
 					{
 						"path": "partitions.bin",
