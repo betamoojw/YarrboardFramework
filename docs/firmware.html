@@ -327,6 +327,14 @@
             // Set the manifest URL for ESP Web Tools
             installButton.setAttribute('manifest', manifestUrl);
 
+            // Add event listener to handle post-install Improv configuration
+            installButton.addEventListener('state-changed', (event) => {
+                if (event.detail.state === 'INSTALLED') {
+                    // Trigger Improv WiFi provisioning after successful install
+                    console.log('Installation complete, starting Improv WiFi provisioning...');
+                }
+            });
+
             // Show the button
             container.classList.remove('d-none');
         }

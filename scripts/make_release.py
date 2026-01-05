@@ -14,6 +14,7 @@ def generate_espwebtools_manifest(board_name, chip_family, version, firmware_url
 		"version": version,
 		"home_assistant_domain": "yarrboard",
 		"new_install_prompt_erase": False,
+		"new_install_improv_wait_time": 20,
 		"builds": [
 			{
 				"chipFamily": chip_family,
