@@ -73,7 +73,7 @@
     <div class="container col-xl-5 col-lg-7 col-md-10 mx-auto">
         <!-- Header with Logo and Title -->
         <nav class="navbar bg-body-tertiary rounded-bottom mb-4">
-            <div class="container-fluid">
+            <div class="container-fluid justify-content-center">
                 <a class="navbar-brand d-flex align-items-center" href="https://github.com/hoeken/YarrboardFramework">
                     <img src="logo.png" alt="Yarrboard" width="30" height="30" class="logo me-2 rounded">
                     <span>Yarrboard Firmware Installer</span>
@@ -167,15 +167,12 @@
                         </div>
 
                         <!-- Board Info Display (Image and Description) -->
-                        <div id="boardInfoContainer" class="card mb-3 d-none">
-                            <div class="card-body">
-                                <div id="boardImageContainer" class="mb-3 d-none text-center">
-                                    <img id="boardImage" src="" alt="Board image" class="img-fluid rounded"
-                                        style="max-height: 300px;">
-                                </div>
-                                <div id="boardDescriptionContainer" class="d-none">
-                                    <p id="boardDescription" class="card-text mb-0"></p>
-                                </div>
+                        <div id="boardInfoContainer" class="mb-3 d-none">
+                            <div id="boardImageContainer" class="mb-3 d-none text-center">
+                                <img id="boardImage" src="" alt="Board image" class="img-fluid rounded w-100">
+                            </div>
+                            <div id="boardDescriptionContainer" class="d-none">
+                                <p id="boardDescription" class="mb-0"></p>
                             </div>
                         </div>
 
