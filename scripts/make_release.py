@@ -179,8 +179,9 @@ if __name__ == '__main__':
 	# This grabs:
 	#   ## Version <version> or ### v<version> etc.
 	#   ...lines...
-	# up until the next heading at the same level OR end of file
-	pattern = rf"(#+\s*(?:Version\s+)?v?{re.escape(version)}(?:\n(?!#).*)*)"
+	# up until the next version header OR end of file
+	# Pattern matches lines that don't start with a version header (# vX.Y.Z or ## Version X.Y.Z)
+	pattern = rf"(#+\s*(?:Version\s+)?v?{re.escape(version)}(?:\n(?!#+\s*(?:Version\s+)?v?\d+\.\d+\.\d+).*)*)"
 	m = re.search(pattern, content, re.MULTILINE)
 	if not m:
 		print("🔴 Could not extract latest version block from CHANGELOG.md  Needs this format: ## Version x.y.z 🔴")
