@@ -1,8 +1,6 @@
 ## v2.1
 
 * get espwebtools integrated for first firmware upload
-  * update make_release.py with optional path to release folder.
-    * default to docs/releases
   * test the "ask for erase" function.  add warning text if we can't safely overwrite.
 
 * consolidate config and settings

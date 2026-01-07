@@ -13,8 +13,8 @@ def generate_espwebtools_manifest(board_name, chip_family, version, firmware_url
 		"name": f"{board_name} Firmware",
 		"version": version,
 		"home_assistant_domain": "yarrboard",
-		"new_install_prompt_erase": False,
-		"new_install_improv_wait_time": 20,
+		"new_install_prompt_erase": True,
+		"new_install_improv_wait_time": 10,
 		"builds": [
 			{
 				"chipFamily": chip_family,
@@ -47,52 +47,11 @@ script_dir = Path(__file__).resolve().parent
 repo_root = script_dir.parent if script_dir.name == 'scripts' else script_dir
 os.chdir(repo_root)
 
-#what boards / build targets to include in the release
-release_config_path = Path("releases/config.json")
-if not release_config_path.exists():
-	print("🔴 releases/config.json does not exist 🔴")
-	sys.exit(1)
-
-try:
-	with open(release_config_path, "r") as f:
-		release_config = json.load(f)
-		boards = release_config.get("boards", [])
-		firmware_url_base = release_config.get("firmware_url_base", "")
-		signing_key_path = release_config.get("signing_key_path", "")
-		if not boards:
-			print("🔴 No boards found in config.json 🔴")
-			sys.exit(1)
-		if not firmware_url_base:
-			print("🔴 No firmware_url_base found in config.json 🔴")
-			sys.exit(1)
-		if not signing_key_path:
-			print("🔴 No signing_key_path found in config.json 🔴")
-			sys.exit(1)
-
-		# Validate board configuration format
-		for board in boards:
-			if isinstance(board, dict):
-				if "name" not in board:
-					print("🔴 Board configuration missing 'name' field 🔴")
-					sys.exit(1)
-				if "chip_family" not in board:
-					print("🔴 Board configuration missing 'chip_family' field 🔴")
-					sys.exit(1)
-			else:
-				print("🔴 Board configuration must be an object with 'name' and 'chip_family' fields 🔴")
-				sys.exit(1)
-except json.JSONDecodeError as e:
-	print(f"🔴 Error parsing release_config.json: {e} 🔴")
-	sys.exit(1)
-except Exception as e:
-	print(f"🔴 Error reading release_config.json: {e} 🔴")
-	sys.exit(1)
-
 if __name__ == '__main__':
 
 	# --- parse arguments ---
 	parser = argparse.ArgumentParser(description="Build Yarrboard firmware release")
-
+ 
 	parser.add_argument(
 		"--test", action="store_true",
 		help="Run in test mode (do not actually do anything, but print the results)")
@@ -103,9 +62,57 @@ if __name__ == '__main__':
 			help="Publish the GitHub release automatically"
 	)
 
+	parser.add_argument(
+		"--output",
+		default="docs/releases",
+		help="Output directory for release files (default: docs/releases)"
+	)
+
 	args = parser.parse_args()
 
 	test_mode = args.test  # boolean True/False
+	output_dir = args.output
+
+	#what boards / build targets to include in the release
+	release_config_path = Path(f"{output_dir}/config.json")
+	if not release_config_path.exists():
+		print(f"🔴 {output_dir}/config.json does not exist 🔴")
+		sys.exit(1)
+
+	try:
+		with open(release_config_path, "r") as f:
+			release_config = json.load(f)
+			boards = release_config.get("boards", [])
+			firmware_url_base = release_config.get("firmware_url_base", "")
+			signing_key_path = release_config.get("signing_key_path", "")
+			if not boards:
+				print("🔴 No boards found in config.json 🔴")
+				sys.exit(1)
+			if not firmware_url_base:
+				print("🔴 No firmware_url_base found in config.json 🔴")
+				sys.exit(1)
+			if not signing_key_path:
+				print("🔴 No signing_key_path found in config.json 🔴")
+				sys.exit(1)
+
+			# Validate board configuration format
+			for board in boards:
+				if isinstance(board, dict):
+					if "name" not in board:
+						print("🔴 Board configuration missing 'name' field 🔴")
+						sys.exit(1)
+					if "chip_family" not in board:
+						print("🔴 Board configuration missing 'chip_family' field 🔴")
+						sys.exit(1)
+				else:
+					print("🔴 Board configuration must be an object with 'name' and 'chip_family' fields 🔴")
+					sys.exit(1)
+	except json.JSONDecodeError as e:
+		print(f"🔴 Error parsing release_config.json: {e} 🔴")
+		sys.exit(1)
+	except Exception as e:
+		print(f"🔴 Error reading release_config.json: {e} 🔴")
+		sys.exit(1)
 
 	#look up our version #
 	version = False
@@ -218,14 +225,14 @@ if __name__ == '__main__':
 		else:
 			os.system(cmd)
 
-		#create board-specific releases directory
-		board_dir = f'releases/{board_name}'
+		#create board-specific output directory
+		board_dir = f'{output_dir}/{board_name}'
 		if test_mode:
 			print(f'mkdir -p {board_dir}')
 		else:
 			os.makedirs(board_dir, exist_ok=True)
 
-		#copy our fimrware to releases directory
+		#copy our firmware to output directory
 		cmd = f'cp .pio/build/{board_name}/signed.bin {board_dir}/{board_name}-{version}.bin'
 		if test_mode:
 			print (cmd)
@@ -243,7 +250,7 @@ if __name__ == '__main__':
 		print(f'Generating ESP Web Tools files for {board_name}')
 
 		# Create espwebtools directory
-		espwebtools_dir = f'releases/{board_name}-{version}-espwebtools'
+		espwebtools_dir = f'{output_dir}/{board_name}-{version}-espwebtools'
 		if test_mode:
 			print(f'mkdir -p {espwebtools_dir}')
 		else:
@@ -319,11 +326,11 @@ if __name__ == '__main__':
 	if test_mode:
 		print (config_str)
 	else:
-		with open("releases/ota_manifest.json", "w") as text_file:
+		with open(f"{output_dir}/ota_manifest.json", "w") as text_file:
 				text_file.write(config_str)
 
 	# Update full_manifest.json with the new release information
-	releases_json_path = Path("releases/full_manifest.json")
+	releases_json_path = Path(f"{output_dir}/full_manifest.json")
 
 	# Load existing full_manifest.json or create new structure
 	if releases_json_path.exists():
@@ -381,17 +388,17 @@ if __name__ == '__main__':
 	# Write updated full_manifest.json
 	releases_json_str = json.dumps(releases_data, indent=2)
 	if test_mode:
-		print(f'\nWould write to releases/full_manifest.json:\n{releases_json_str}')
+		print(f'\nWould write to {output_dir}/full_manifest.json:\n{releases_json_str}')
 	else:
 		with open(releases_json_path, "w") as f:
 			f.write(releases_json_str)
-		print(f'Updated releases/full_manifest.json')
+		print(f'Updated {output_dir}/full_manifest.json')
 
 	#some info to the user to finish the release
 	print("Build complete.\n")
 
 	print("Next steps:")
-	print(f'1. Add the new firmware files: git add releases')
+	print(f'1. Add the new firmware files: git add {output_dir}')
 	print(f'2. Commit the new version: git commit -am "Firmware release v{version}"')
 	print(f'3. Push changes to github: git push')
 	print(f'4. Create a new tag: git tag -a v{version} -m "Firmware release v{version}"')
@@ -406,9 +413,9 @@ if __name__ == '__main__':
 		# 1. Add the new firmware files
 		print("1. Adding firmware files...")
 		if test_mode:
-			print("git add releases")
+			print(f"git add {output_dir}")
 		else:
-			os.system("git add releases")
+			os.system(f"git add {output_dir}")
 
 		# 2. Commit the new version
 		print("2. Committing changes...")

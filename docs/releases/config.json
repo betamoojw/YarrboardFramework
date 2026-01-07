@@ -8,6 +8,6 @@
 			"description": "This is a test board for testing purposes."
 		}
 	],
-	"firmware_url_base": "https://raw.githubusercontent.com/hoeken/YarrboardFramework/main/releases/",
+	"firmware_url_base": "https://hoeken.github.io/YarrboardFramework/releases/",
 	"signing_key_path": "~/Dropbox/misc/yarrboard/YarrboardFramework.pem"
 }
