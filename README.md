@@ -29,9 +29,10 @@ All framework source code is licensed under MPL-2.0, allowing commercial use and
 Dynamic JSON-based command protocol with:
 - Registration of up to 50 commands (configurable via `YB_PROTOCOL_MAX_COMMANDS`)
 - Role-based command access control
-- Support for WebSocket, HTTP API, and Serial interfaces
+- Support for WebSocket, HTTP API, Serial, and MQTT interfaces
 - Message rate limiting and statistics
 - Lambda or member function callbacks
+- Context information (communication mode, user role, client ID) passed to handlers
 
 ### Web Interface
 
@@ -50,15 +51,18 @@ All subsystems inherit from `BaseController`, providing a unified lifecycle:
 
 ```cpp
 class BaseController {
-  virtual bool setup();                           // Initialization
-  virtual void loop();                            // Main execution
-  virtual void loadConfigHook(JsonVariantConst);  // Load configuration
-  virtual void generateConfigHook(JsonVariant);   // Serialize configuration
-  virtual void generateUpdateHook(JsonVariant);   // Real-time data updates
-  virtual void generateStatsHook(JsonVariant);    // Statistics generation
-  virtual void mqttUpdateHook();                  // MQTT publishing
-  virtual void haGenerateDiscoveryHook();         // Home Assistant discovery
-  virtual void updateBrightnessHook(uint8_t);     // Global brightness changes
+  virtual bool setup();                                                                         // Initialization
+  virtual void loop();                                                                          // Main execution
+  virtual bool loadConfigHook(JsonVariant config, char* error, size_t len);                    // Load configuration with error handling
+  virtual void generateConfigHook(JsonVariant config);                                         // Serialize configuration
+  virtual void generateUpdateHook(JsonVariant output);                                         // Real-time data updates
+  virtual bool needsFastUpdate();                                                              // Check if fast update needed
+  virtual void generateFastUpdateHook(JsonVariant output);                                     // Fast real-time updates
+  virtual void generateStatsHook(JsonVariant output);                                          // Statistics generation
+  virtual void mqttUpdateHook(MQTTController* mqtt);                                           // MQTT publishing
+  virtual void haUpdateHook(MQTTController* mqtt);                                             // Home Assistant state updates
+  virtual void haGenerateDiscoveryHook(JsonVariant components, const char* uuid, MQTTController* mqtt); // Home Assistant discovery
+  virtual void updateBrightnessHook(float brightness);                                         // Global brightness changes
 };
 ```
 
@@ -92,11 +96,14 @@ class ChannelController : public BaseController {
 ```
 
 Channels inherit from `BaseChannel` and implement:
-- `init()` - Channel initialization with ID
-- `loadConfig()` - Configuration loading with validation
-- `generateUpdate()` - Real-time status updates
-- `mqttUpdate()` - MQTT publishing with hierarchical topics
-- `haGenerateDiscovery()` - Home Assistant device registration
+- `init(uint8_t id)` - Channel initialization with numeric ID (1-N)
+- `loadConfig(JsonVariantConst config, char* error, size_t err_size)` - Configuration loading with validation and error reporting
+- `generateConfig(JsonVariant config)` - Serialize channel configuration
+- `generateUpdate(JsonVariant output)` - Real-time status updates
+- `generateStats(JsonVariant output)` - Statistics generation
+- `haGenerateDiscovery(JsonVariant doc, const char* uuid, MQTTController* mqtt)` - Home Assistant discovery message
+- `haPublishState(MQTTController* mqtt)` - Publish state to Home Assistant
+- `haPublishAvailable(MQTTController* mqtt)` - Publish availability to Home Assistant
 
 ## Installation
 
@@ -143,15 +150,27 @@ MyProject/
 
 YarrboardApp yba;
 
+// Define GulpedFile structures for web assets
+static const GulpedFile index_file = {
+  .data = index_html_gz,
+  .length = index_html_gz_len,
+  .sha256 = index_html_gz_sha,
+  .filename = "index.html",
+  .mimetype = "text/html"
+};
+
+static const GulpedFile logo_file = {
+  .data = logo_png_gz,
+  .length = logo_png_gz_len,
+  .sha256 = logo_png_gz_sha,
+  .filename = "logo.png",
+  .mimetype = "image/png"
+};
+
 void setup() {
   // Set embedded web assets
-  yba.http.index_length = index_html_gz_len;
-  yba.http.index_sha = index_html_gz_sha;
-  yba.http.index_data = index_html_gz;
-
-  yba.http.logo_length = logo_gz_len;
-  yba.http.logo_sha = logo_gz_sha;
-  yba.http.logo_data = logo_gz;
+  yba.http.index = &index_file;
+  yba.http.logo = &logo_file;
 
   // Configure board metadata
   yba.board_name = "My Device";
@@ -159,7 +178,7 @@ void setup() {
   yba.firmware_version = "1.0.0";
   yba.hardware_version = "REV_A";
   yba.manufacturer = "My Company";
-  yba.board_url = "https://github.com/myuser/myproject";
+  yba.hardware_url = "https://github.com/myuser/myproject";
   yba.project_url = "https://example.com/myproject";
   yba.project_name = "My Project";
 
@@ -198,9 +217,17 @@ public:
     output["my_data"] = getValue();
   }
 
-  void loadConfigHook(JsonVariantConst config) override {
+  bool loadConfigHook(JsonVariant config, char* error, size_t len) override {
     // Load configuration from JSON
     setting = config["setting"] | defaultValue;
+
+    // Validate configuration
+    if (setting < 0) {
+      snprintf(error, len, "Invalid setting value: %d", setting);
+      return false;
+    }
+
+    return true;
   }
 
   void generateConfigHook(JsonVariant config) override {
@@ -209,9 +236,14 @@ public:
   }
 
 private:
-  void handleCommand(JsonVariantConst input, JsonVariant output) {
+  void handleCommand(JsonVariantConst input, JsonVariant output, ProtocolContext context) {
     // Handle protocol command
     output["result"] = processCommand(input["param"]);
+
+    // Access context information
+    // context.mode - communication mode (WEBSOCKET, HTTP, SERIAL, MQTT)
+    // context.role - user role (NOBODY, GUEST, ADMIN)
+    // context.clientId - unique client identifier
   }
 
   int setting;
@@ -227,37 +259,46 @@ yba.registerController(myController);
 ```cpp
 class MyChannel : public BaseChannel {
 public:
-  void init(const char* id) override {
+  void init(uint8_t id) override {
     BaseChannel::init(id);
-    // Hardware initialization
+    // Hardware initialization (channels are numbered 1-N)
   }
 
-  void loadConfig(JsonObjectConst config) override {
-    BaseChannel::loadConfig(config);
+  bool loadConfig(JsonVariantConst config, char* error, size_t err_size) override {
+    if (!BaseChannel::loadConfig(config, error, err_size))
+      return false;
+
     pin = config["pin"] | -1;
     // Additional configuration
+
+    return true;
   }
 
-  void generateConfig(JsonObject config) override {
+  void generateConfig(JsonVariant config) override {
     BaseChannel::generateConfig(config);
     config["pin"] = pin;
   }
 
-  void generateUpdate(JsonObject output) override {
+  void generateUpdate(JsonVariant output) override {
     output["value"] = readValue();
   }
 
-  void mqttUpdate(JsonObject output) override {
-    output["state"] = readValue();
-  }
-
-  void haGenerateDiscovery() override {
-    JsonDocument doc;
-    doc["name"] = key;
+  void haGenerateDiscovery(JsonVariant doc, const char* uuid, MQTTController* mqtt) override {
+    // Populate discovery document
+    doc["name"] = name;
     doc["state_topic"] = "~/state";
     doc["device_class"] = "sensor";
+    doc["unique_id"] = ha_uuid;
 
-    _app.mqtt.publishDiscovery("sensor", key, doc.as<JsonObject>());
+    // Publish to Home Assistant
+    mqtt->publishDiscovery("sensor", key, uuid, doc);
+  }
+
+  void haPublishState(MQTTController* mqtt) override {
+    // Publish current state to Home Assistant
+    JsonDocument doc;
+    doc["value"] = readValue();
+    mqtt->publishHA(key, "state", doc.as<JsonObject>());
   }
 
 private:
@@ -308,15 +349,19 @@ The framework uses Gulp to process web assets:
    - Minifies HTML, CSS, and JavaScript
    - Encodes images as base64 data URIs
    - Gzip compresses the final output
-   - Generates C header files with byte arrays
+   - Generates C header files with GulpedFile structures
    - Calculates SHA256 for ETag-based caching
 
 2. **Generated Headers**:
    ```cpp
-   // Generated by gulp
-   const unsigned char index_html_gz[] = { /* compressed data */ };
-   const unsigned int index_html_gz_len = 12345;
-   const char* index_html_gz_sha = "abc123...";
+   // GulpedFile structure definition
+   struct GulpedFile {
+     const uint8_t* data;      // Pointer to the file data array
+     size_t length;            // Length of the data in bytes
+     const char* sha256;       // SHA-256 hash as hex string
+     const char* filename;     // Original filename (e.g., "logo.png")
+     const char* mimetype;     // MIME type (e.g., "image/png")
+   };
    ```
 
 3. **Automatic Build**:
@@ -339,11 +384,19 @@ Core libraries managed via PlatformIO:
 
 ### Configuration Access
 
-Controllers load configuration via hooks:
+Controllers load configuration via hooks with error handling:
 ```cpp
-void MyController::loadConfigHook(JsonVariantConst config) {
+bool MyController::loadConfigHook(JsonVariant config, char* error, size_t len) {
   // Access nested configuration
   setting1 = config["setting1"] | defaultValue;
+
+  // Validate and report errors
+  if (setting1 < 0 || setting1 > 100) {
+    snprintf(error, len, "setting1 must be between 0 and 100");
+    return false;
+  }
+
+  return true;
 }
 ```
 
@@ -404,15 +457,16 @@ Optional SSL/TLS support:
 Controllers and channels automatically publish MQTT discovery messages:
 
 ```cpp
-void MyChannel::haGenerateDiscovery() {
-  JsonDocument doc;
-  doc["name"] = key;
+void MyChannel::haGenerateDiscovery(JsonVariant doc, const char* uuid, MQTTController* mqtt) {
+  // Populate discovery document
+  doc["name"] = name;
   doc["state_topic"] = "~/state";
   doc["command_topic"] = "~/set";
   doc["device_class"] = "switch";
+  doc["unique_id"] = ha_uuid;
 
   // Framework handles device info, availability, etc.
-  _app.mqtt.publishDiscovery("switch", key, doc.as<JsonObject>());
+  mqtt->publishDiscovery("switch", key, uuid, doc);
 }
 ```
 
@@ -476,7 +530,7 @@ Multi-output logging to multiple sinks simultaneously:
 YBP.println("Debug message");
 
 // Add custom print sink
-YPB.addPrinter(&myPrintSink);
+YBP.addPrinter(&myPrintSink);
 ```
 
 ### Core Dump Support
@@ -945,7 +999,7 @@ JsonDocument doc;
 doc["msg"] = "data_response";
 doc["temperature"] = 25.5;
 doc["humidity"] = 60.0;
-yba.protocol.sendMessageToAll(doc.as<JsonObject>());
+yba.protocol.sendToAll(doc.as<JsonVariant>(), GUEST);
 ```
 
 **JavaScript Side:**
