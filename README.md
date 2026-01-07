@@ -602,6 +602,107 @@ YB.App.addPage(myPage);
 - `onOpen(callback)` - Register callback when page opens
 - `onClose(callback)` - Register callback when page closes
 
+#### YB.SettingsPanel - Settings Panel Management
+
+Create custom settings panels that integrate seamlessly with the built-in Settings page:
+
+```javascript
+// Create a custom settings panel
+let customPanel = new YB.SettingsPanel({
+  name: 'custom',                    // Unique identifier
+  displayName: 'Custom Settings',    // Display name in settings navbar
+  position: 'general',               // Position relative to another panel
+  useTitle: true,                    // Show displayName as heading (default: true)
+  roundedBorder: true,               // Add border styling (default: true)
+  content: '<p>Your settings here</p>' // HTML content
+});
+
+// Add lifecycle hooks
+customPanel.onOpen(function() {
+  console.log("Settings panel opened");
+  // Load settings data, start polling, etc.
+});
+
+customPanel.onClose(function() {
+  console.log("Settings panel closed");
+  // Save settings, cleanup, etc.
+});
+
+// Add the panel to the settings page
+YB.App.addSettingsPanel(customPanel);
+```
+
+**SettingsPanel Properties:**
+- `name` - Unique panel identifier
+- `displayName` - Display name in settings navigation
+- `position` - Position in navbar ('first', 'last', or another panel name like 'wifi')
+- `useTitle` - Whether to show displayName as a heading (default: true)
+- `roundedBorder` - Whether to add border styling (default: true)
+- `content` - HTML content of the panel
+
+**SettingsPanel Methods:**
+- `setContent(html)` - Update panel content
+- `onOpen(callback)` - Register callback when panel opens
+- `onClose(callback)` - Register callback when panel closes
+- `show()` - Show the panel
+- `hide()` - Hide the panel
+- `remove()` - Completely remove the panel from the DOM
+
+**App Settings Panel Methods:**
+- `YB.App.addSettingsPanel(panel)` - Add a panel to the settings page
+- `YB.App.getSettingsPanel(name)` - Get a panel object by name
+- `YB.App.removeSettingsPanel(name)` - Remove a panel from the settings page
+- `YB.App.openSettingsPanel(name)` - Navigate to and open a specific panel
+
+**Complete Example:**
+
+```javascript
+YB.App.onStart(function() {
+  // Create a custom settings panel
+  let mySettingsPanel = new YB.SettingsPanel({
+    name: 'mydevice',
+    displayName: 'Device Settings',
+    position: 'wifi',  // Insert after WiFi settings
+    content: `
+      <form id="mySettingsForm">
+        <div class="mb-3">
+          <label class="form-label">Device Name</label>
+          <input type="text" class="form-control" id="deviceName">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Update Interval (ms)</label>
+          <input type="number" class="form-control" id="updateInterval">
+        </div>
+        <button type="submit" class="btn btn-primary">Save Settings</button>
+      </form>
+    `
+  });
+
+  // Load settings when panel opens
+  mySettingsPanel.onOpen(function() {
+    // Request current settings from server
+    YB.client.send({ cmd: 'get_device_settings' });
+  });
+
+  // Handle form submission
+  YB.App.onMessage('device_settings', function(msg) {
+    $('#deviceName').val(msg.name);
+    $('#updateInterval').val(msg.interval);
+  });
+
+  $('#mySettingsForm').submit(function(e) {
+    e.preventDefault();
+    YB.client.send({
+      cmd: 'set_device_settings',
+      name: $('#deviceName').val(),
+      interval: parseInt($('#updateInterval').val())
+    });
+  });
+
+  YB.App.addSettingsPanel(mySettingsPanel);
+});
+```
+
 #### YB.ChannelRegistry - Hardware Channel Management
 
 Manage hardware channels (PWM, relays, sensors, etc.) dynamically:
