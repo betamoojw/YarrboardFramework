@@ -50,7 +50,7 @@ void setup()
   yba.git_url = "https://github.com/hoeken/YarrboardFramework";
 
   // OTA updates configuration.  Firmware can poll the url and download its own OTA updates.
-  yba.ota.firmware_manifest_url = "https://raw.githubusercontent.com/hoeken/YarrboardFramework/main/releases/ota_manifest.json";
+  yba.ota.firmware_manifest_url = "https://hoeken.github.io/YarrboardFramework/releases/ota_manifest.json";
 
   // firmware signing is optional, but recommended
   // generate your public key like so:
