@@ -21,6 +21,9 @@
     currentPage: null,
     pages: {},
 
+    currentSettingPanel: null,
+    settingPanels: {},
+
     currentlyPickingBrightness: false,
 
     onStart: function (callback) {
@@ -66,10 +69,28 @@
       }
     },
 
+    addSettingsPanel: function (panel) {
+      YB.App.settingPanels[panel.name] = panel;
+    },
+
+    getSettingsPanel: function (name) {
+      return YB.App.settingPanels[name] || null;
+    },
+
+    removeSettingsPanel: function (name) {
+      let panel = YB.App.getSettingsPanel(name);
+      if (panel) {
+        panel.remove();
+        delete YB.App.settingPanels[name];
+      }
+    },
+
     start: function () {
       // Setup all pages now that DOM is ready
       for (let page of Object.values(YB.App.pages))
         page.setup();
+      for (let panel of Object.values(YB.App.settingPanels))
+        panel.setup();
 
       YB.log.setupDebugTerminal();
 
@@ -187,6 +208,26 @@
       //okay open it.
       pageObj.open();
       YB.App.currentPage = page;
+    },
+
+    openSettingsPanel: function (panel) {
+      YB.log(`opening settings ${panel}`);
+
+      //look up our object
+      let panelObj = YB.App.getSettingsPanel(panel);
+      if (!panelObj) {
+        YB.log(`No such settings panel ${panel}`);
+        return;
+      }
+
+      //close the old page to trigger callbacks.
+      let current = YB.App.getSettingsPanel(YB.App.currentSettingPanel);
+      if (current)
+        current.close();
+
+      //okay open it.
+      panelObj.open();
+      YB.App.currentSettingPanel = panel;
     },
 
     isMFD: function () {
@@ -484,7 +525,7 @@
 
       //bail on fail.
       if (errors) {
-        YB.Util.flashClass($("#generalSettingsForm"), "border-danger");
+        YB.Util.flashClass($("#generalSettingsPanel"), "border-danger");
         YB.Util.flashClass($("#saveGeneralSettings"), "btn-danger");
         return;
       }
@@ -493,7 +534,7 @@
       YB.App.updateBoardName(settings.board_name);
 
       //flash whole form green.
-      YB.Util.flashClass($("#generalSettingsForm"), "border-success");
+      YB.Util.flashClass($("#generalSettingsPanel"), "border-success");
       YB.Util.flashClass($("#saveGeneralSettings"), "btn-success");
 
       //okay, send it off.
@@ -520,7 +561,7 @@
 
       //bail on fail.
       if (errors) {
-        YB.Util.flashClass($("#authenticationSettingsForm"), "border-danger");
+        YB.Util.flashClass($("#authSettingsPanel"), "border-danger");
         YB.Util.flashClass($("#saveAuthenticationSettings"), "btn-danger");
         return;
       }
@@ -540,7 +581,7 @@
       }
 
       //flash whole form green.
-      YB.Util.flashClass($("#authenticationSettingsForm"), "border-success");
+      YB.Util.flashClass($("#authSettingsPanel"), "border-success");
       YB.Util.flashClass($("#saveAuthenticationSettings"), "btn-success");
 
       //okay, send it off.
@@ -593,13 +634,13 @@
 
       // bail on fail
       if (errors) {
-        YB.Util.flashClass($("#webServerSettingsForm"), "border-danger");
+        YB.Util.flashClass($("#httpSettingsPanel"), "border-danger");
         YB.Util.flashClass($("#saveWebServerSettings"), "btn-danger");
         return;
       }
 
       // flash whole form green
-      YB.Util.flashClass($("#webServerSettingsForm"), "border-success");
+      YB.Util.flashClass($("#httpSettingsPanel"), "border-success");
       YB.Util.flashClass($("#saveWebServerSettings"), "btn-success");
 
       // okay, send it off.
@@ -666,13 +707,13 @@
 
       // bail on fail
       if (errors) {
-        YB.Util.flashClass($("#mqttSettingsForm"), "border-danger");
+        YB.Util.flashClass($("#mqttSettingsPanel"), "border-danger");
         YB.Util.flashClass($("#saveMQTTSettings"), "btn-danger");
         return;
       }
 
       // flash whole form green
-      YB.Util.flashClass($("#mqttSettingsForm"), "border-success");
+      YB.Util.flashClass($("#mqttSettingsPanel"), "border-success");
       YB.Util.flashClass($("#saveMQTTSettings"), "btn-success");
 
       // okay, send it off
@@ -751,7 +792,7 @@
 
       // bail on fail
       if (errors) {
-        YB.Util.flashClass($("#networkSettingsForm"), "border-danger");
+        YB.Util.flashClass($("#networkSettingsPanel"), "border-danger");
         YB.Util.flashClass($("#saveNetworkSettings"), "btn-danger");
         return;
       }
@@ -763,7 +804,7 @@
       );
 
       // flash success
-      YB.Util.flashClass($("#networkSettingsForm"), "border-success");
+      YB.Util.flashClass($("#networkSettingsPanel"), "border-success");
       YB.Util.flashClass($("#saveNetworkSettings"), "btn-success");
 
       // send it off
@@ -801,13 +842,13 @@
 
       // bail on fail
       if (errors) {
-        YB.Util.flashClass($("#miscSettingsForm"), "border-danger");
+        YB.Util.flashClass($("#miscSettingsPanel"), "border-danger");
         YB.Util.flashClass($("#saveMiscSettings"), "btn-danger");
         return;
       }
 
       // flash success
-      YB.Util.flashClass($("#miscSettingsForm"), "border-success");
+      YB.Util.flashClass($("#miscSettingsPanel"), "border-success");
       YB.Util.flashClass($("#saveMiscSettings"), "btn-success");
 
       // send it off
@@ -967,6 +1008,8 @@
         YB.App.openPage('login');
     },
 
+    openDefaultSettingsPanel: function () { YB.App.openSettingsPanel("general"); },
+
     getStoredTheme: function () { localStorage.getItem('theme'); },
     setStoredTheme: function () { localStorage.setItem('theme', theme); },
 
@@ -1042,6 +1085,8 @@
         YB.App.loadConfigs();
         YB.App.openDefaultPage();
       }
+
+      YB.App.openDefaultSettingsPanel();
     },
 
     handleStatusMessage: function (msg) {
@@ -1550,9 +1595,261 @@
           YB.App.openPage("home");
       }, 100);
     },
+
+    generateGeneralSettingsUI: function () {
+      return /* html */ `
+        <div class="form-floating mb-3">
+            <input id="board_name" type="text" class="form-control">
+            <label for="board_name">Board Name</label>
+            <div class="invalid-feedback"></div>
+        </div>
+        <div class="form-floating mb-3">
+            <select id="startup_melody" class="form-select" aria-label="Startup Melody">
+            </select>
+            <label for="default_role">Startup Melody</label>
+            <div class="invalid-feedback"></div>
+        </div>
+        <div class="text-center">
+            <button id="saveGeneralSettings" type="button" class="btn btn-primary">
+                Save General Settings
+            </button>
+        </div>
+      `;
+    },
+
+    generateAuthenticationSettingsUI: function () {
+      return /* html */ `
+        <div class="form-floating mb-3">
+            <select id="default_role" class="form-select" aria-label="Default User Role">
+                <option value="nobody">Nobody - Everyone must login.</option>
+                <option value="guest">Guest - Anyone can view and interact. (Admin must
+                    login)
+                </option>
+                <option value="admin">Admin - Anyone has full control. (No login)</option>
+            </select>
+            <label for="default_role">Default User Role</label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="form-floating mb-3 admin_credentials">
+            <input id="admin_user" type="text" class="form-control">
+            <label for="admin_user">Admin Username</label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="form-floating mb-3 admin_credentials">
+            <input id="admin_pass" type="text" class="form-control">
+            <label for="admin_pass">Admin Password</label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="form-floating mb-3 guest_credentials">
+            <input id="guest_user" type="text" class="form-control">
+            <label for="guest_user">Guest Username</label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="form-floating mb-3 guest_credentials">
+            <input id="guest_pass" type="text" class="form-control">
+            <label for="guest_pass">Guest Password</label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="text-center">
+            <button id="saveAuthenticationSettings" type="button" class="btn btn-primary">
+                Save Authentication Settings
+            </button>
+        </div>
+      `;
+    },
+
+    generateHTTPSettingsUI: function () {
+      return /* html */ `
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="app_enable_api" checked>
+            <label class="form-check-label" for="app_enable_api">
+                Enable Web API - <a
+                    href="https://github.com/hoeken/yarrboard#web-api-protocol">documentation</a>
+            </label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="app_enable_mfd" checked>
+            <label class="form-check-label" for="app_enable_mfd">
+                Enable MFD Integration - <a
+                    href="https://github.com/hoeken/yarrboard#mfd-integration">documentation</a>
+            </label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="app_enable_ssl" checked>
+            <label class="form-check-label" for="app_enable_ssl">
+                Enable SSL / HTTPS Encryption - <a
+                    href="https://github.com/hoeken/yarrboard#enable-ssl">documentation</a>
+            </label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="form-floating mb-3" style="display: none" id="server_cert_container">
+            <textarea class="form-control" id="server_cert" placeholder=""></textarea>
+            <label for="server_cert">Server Certificate</label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="form-floating mb-3" style="display: none" id="server_key_container">
+            <textarea class="form-control" id="server_key" placeholder=""></textarea>
+            <label for="server_key">Server Private Key</label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="text-center">
+            <button id="saveWebServerSettings" type="button" class="btn btn-primary">
+                Save Web Server Settings</button>
+        </div>
+      `;
+    },
+
+    generateMQTTSettingsUI: function () {
+      return /* html */ `
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="app_enable_mqtt" checked>
+            <label class="form-check-label" for="app_enable_mqtt">
+                Enable MQTT Publishing - <a
+                    href="https://github.com/hoeken/yarrboard#enable-mqtt">documentation</a>
+            </label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="form-check form-switch mb-3 mqtt_field" style="display: none">
+            <input class="form-check-input" type="checkbox" id="app_use_hostname_as_mqtt_uuid" checked>
+            <label class="form-check-label" for="app_use_hostname_as_mqtt_uuid">
+                Use local hostname as MQTT Unique ID
+            </label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="form-check form-switch mb-3 mqtt_field" style="display: none">
+            <input class="form-check-input" type="checkbox" id="app_enable_mqtt_protocol" checked>
+            <label class="form-check-label" for="app_enable_mqtt_protocol">
+                Enable protocol over MQTT (eg. allow json commands to
+                /yarrboard/{hostname|uuid}/command)
+            </label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="form-check form-switch mb-3 mqtt_field" style="display: none">
+            <input class="form-check-input" type="checkbox" id="app_enable_ha_integration" checked>
+            <label class="form-check-label" for="app_enable_ha_integration">
+                Enable Home Assistant Integration - <a
+                    href="https://github.com/hoeken/yarrboard#enable-ha">documentation</a>
+            </label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="form-floating mb-3 mqtt_field" style="display: none">
+            <input id="mqtt_server" type="text" class="form-control">
+            <label for="mqtt_server">MQTT Server</label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="form-floating mb-3 mqtt_field" style="display: none">
+            <input id="mqtt_user" type="text" class="form-control">
+            <label for="mqtt_user">MQTT Username</label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="form-floating mb-3 mqtt_field" style="display: none">
+            <input id="mqtt_pass" type="text" class="form-control">
+            <label for="mqtt_pass">MQTT Password</label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="form-floating mb-3 mqtt_field" style="display: none">
+            <textarea class="form-control" id="mqtt_cert" placeholder=""></textarea>
+            <label for="mqtt_cert">MQTT Certificate</label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="text-center">
+            <button id="saveMQTTSettings" type="button" class="btn btn-primary">
+                Save MQTT Settings
+            </button>
+        </div>
+      `;
+    },
+
+    generateNetworkSettingsUI: function () {
+      return /* html */ `
+        <div class="form-floating mb-3">
+            <select id="wifi_mode" class="form-select" aria-label="Wifi Mode">
+                <option value="client">Client (Yarrboard connects to WiFi)</option>
+                <option value="ap">AP (You connect to Yarrboard)</option>
+            </select>
+            <label for="wifi_mode">Wifi Mode</label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="form-floating mb-3">
+            <input id="wifi_ssid" type="text" class="form-control">
+            <label for="wifi_ssid">Wifi Name (SSID)</label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="form-floating mb-3">
+            <input id="wifi_pass" type="text" class="form-control">
+            <label for="wifi_pass">Wifi Password</label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="input-group form-floating mb-3">
+            <input id="local_hostname" type="text" class="form-control" placeholder="">
+            <label for="local_hostname">Local Hostname</label>
+            <span class="input-group-text">.local</span>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="text-center">
+            <button id="saveNetworkSettings" type="button" class="btn btn-primary">
+                Save Network Settings
+            </button>
+        </div>
+      `;
+    },
+
+    generateMiscSettingsUI: function () {
+      return /* html */ `
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="app_enable_ota" checked>
+            <label class="form-check-label" for="app_enable_ota">
+                Enable Arduino OTA - for development w/ VSCode
+            </label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="app_enable_serial" checked>
+            <label class="form-check-label" for="app_enable_serial">
+                Enable Serial / USB API - <a
+                    href="https://github.com/hoeken/yarrboard#serial-api-protocol">documentation</a>
+            </label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="text-center">
+            <button id="saveMiscellaneousSettings" type="button" class="btn btn-primary">
+                Save Miscellaneous Settings
+            </button>
+        </div>
+      `;
+    },
+
   };
 
-  //setup all of our message handlers.
+  //
+  // Message Handlers
+  //
   YB.App.onMessage("hello", YB.App.handleHelloMessage);
   YB.App.onMessage("status", YB.App.handleStatusMessage);
   YB.App.onMessage("config", YB.App.handleConfigMessage);
@@ -1567,7 +1864,10 @@
   YB.App.onMessage("set_theme", YB.App.handleSetThemeMessage);
   YB.App.onMessage("set_brightness", YB.App.handleSetBrightnessMessage);
 
-  // Create and add all pages
+
+  //
+  // Pages
+  //
   let homePage = new YB.Page({
     name: 'home',
     displayName: 'Home',
@@ -1640,6 +1940,45 @@
   })
   logoutPage.onOpen(YB.App.logoutPageCallback);
   YB.App.addPage(logoutPage);
+
+  //
+  // Settings Panels
+  //
+  YB.App.addSettingsPanel(new YB.SettingsPanel({
+    name: 'general',
+    displayName: 'General',
+    content: YB.App.generateGeneralSettingsUI()
+  }));
+
+  YB.App.addSettingsPanel(new YB.SettingsPanel({
+    name: 'auth',
+    displayName: 'Authentication',
+    content: YB.App.generateAuthenticationSettingsUI()
+  }));
+
+  YB.App.addSettingsPanel(new YB.SettingsPanel({
+    name: 'http',
+    displayName: 'Web Server',
+    content: YB.App.generateHTTPSettingsUI()
+  }));
+
+  YB.App.addSettingsPanel(new YB.SettingsPanel({
+    name: 'mqtt',
+    displayName: 'MQTT',
+    content: YB.App.generateMQTTSettingsUI()
+  }));
+
+  YB.App.addSettingsPanel(new YB.SettingsPanel({
+    name: 'network',
+    displayName: 'Network',
+    content: YB.App.generateNetworkSettingsUI()
+  }));
+
+  YB.App.addSettingsPanel(new YB.SettingsPanel({
+    name: 'misc',
+    displayName: 'Miscellaneous',
+    content: YB.App.generateMiscSettingsUI()
+  }));
 
   // expose to global
   global.YB = YB;

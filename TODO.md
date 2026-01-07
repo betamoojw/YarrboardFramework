@@ -1,9 +1,5 @@
 ## v2.1
 
-* consolidate config and settings
-  * create addSettingsPanel() similar to addPage() but with settings content.
-  * very basic - just name, title, and content
-
 ## Long Term
 
 * currently we have a chance of collisions if http api + websockets requests happen simulataneously.
