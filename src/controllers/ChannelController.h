@@ -98,6 +98,11 @@ class ChannelController : public BaseController
       }
     };
 
+    void generateCapabilitiesHook(JsonVariant output) override
+    {
+      output[_name]["count"] = _channels.size();
+    };
+
     void handleConfigCommand(JsonVariantConst input, JsonVariant output)
     {
       char error[128];
