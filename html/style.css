@@ -92,3 +92,14 @@ span.expandable:hover {
     cursor: pointer;
     text-decoration: underline dotted;
 }
+
+/* Settings nav items: 33% width on xs, full width on sm+ */
+#navbarSettingsLinks .nav-item {
+    width: 33.33%;
+}
+
+@media (min-width: 576px) {
+    #navbarSettingsLinks .nav-item {
+        width: auto;
+    }
+}
