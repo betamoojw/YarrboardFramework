@@ -1,7 +1,6 @@
-## v2.1
+## v2.2
 
-* update TODO 
-* references to ConfigForm
+* add compile targets for each board type to firmware releases
 
 ## Long Term
 

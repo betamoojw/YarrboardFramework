@@ -1,3 +1,7 @@
+# v2.1.1
+
+- Settings menu text align left
+
 # v2.1.0
 
 ## 🌐 Frontend & Web UI

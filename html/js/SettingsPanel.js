@@ -114,18 +114,14 @@
       return null;
     }
 
-    // Create the navbar list item
-    var navItem = $('<li></li>')
-      .attr('id', this.name + 'SettingsNav')
-      .addClass('nav-item nav-permission');
-
-    // Create the link
-    var navLink = $('<a></a>')
-      .addClass('nav-link')
-      .attr('onclick', 'YB.App.openSettingsPanel(\'' + this.name + '\')')
-      .text(this.displayName);
-
-    navItem.append(navLink);
+    // Create the navbar list item and link
+    var navItem = $(`
+      <li id="${this.name}SettingsNav" class="nav-item nav-permission text-start">
+        <a class="nav-link" onclick="YB.App.openSettingsPanel('${this.name}')">
+          ${this.displayName}
+        </a>
+      </li>
+    `);
 
     this._navbarEntry = navItem;
     return navItem;
