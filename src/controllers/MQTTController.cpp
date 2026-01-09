@@ -36,6 +36,12 @@ bool MQTTController::setup()
   // on connect home hook
   mqttClient.onConnect(_onConnectStatic);
 
+  // on disconnect hook
+  mqttClient.onDisconnect(_onDisconnectStatic);
+
+  // on error hook
+  mqttClient.onError(_onErrorStatic);
+
   // home assistant connection discovery hook.
   if (_cfg.app_enable_ha_integration) {
     mqttClient.onTopic("homeassistant/status", 0, [&](const char* topic, const char* payload, int retain, int qos, bool dup) {
@@ -44,14 +50,17 @@ bool MQTTController::setup()
     });
   }
 
-  return connect();
+  return connect(true);
 }
 
-bool MQTTController::connect()
+bool MQTTController::connect(bool waitBlocking)
 {
   // are we enabled?
   if (!_cfg.app_enable_mqtt)
     return true;
+
+  // this is our first try.
+  _firstConnection = true;
 
   mqttClient.setServer(_cfg.mqtt_server);
   mqttClient.setCredentials(_cfg.mqtt_user, _cfg.mqtt_pass);
@@ -64,15 +73,17 @@ bool MQTTController::connect()
   /**
    * Wait blocking until the connection is established
    */
-  int tries = 0;
-  while (!mqttClient.connected()) {
-    vTaskDelay(pdMS_TO_TICKS(100));
-    tries++;
+  if (waitBlocking) {
+    int tries = 0;
+    while (!mqttClient.connected()) {
+      vTaskDelay(pdMS_TO_TICKS(100));
+      tries++;
 
-    if (tries > 20) {
-      mqttClient.disconnect();
-      YBP.println("MQTT failed to connect.");
-      return false;
+      if (tries > 20) {
+        mqttClient.forceStop();
+        YBP.println("MQTT failed to connect.");
+        return false;
+      }
     }
   }
 
@@ -139,7 +150,7 @@ void MQTTController::generateStatsHook(JsonVariant output)
 void MQTTController::disconnect()
 {
   if (mqttClient.connected())
-    mqttClient.disconnect();
+    mqttClient.forceStop();
 }
 
 bool MQTTController::isConnected()
@@ -225,6 +236,9 @@ void MQTTController::onConnect(bool sessionPresent)
 {
   YBP.println("Connected to MQTT.");
 
+  // clear first connection flag on successful connection
+  _firstConnection = false;
+
   if (_cfg.app_enable_ha_integration)
     haDiscovery();
 
@@ -238,6 +252,45 @@ void MQTTController::_onConnectStatic(bool sessionPresent)
 {
   if (_instance) {
     _instance->onConnect(sessionPresent);
+  }
+}
+
+void MQTTController::onDisconnect(bool sessionPresent)
+{
+  YBP.println("Disconnected from MQTT.");
+}
+
+void MQTTController::_onDisconnectStatic(bool sessionPresent)
+{
+  if (_instance) {
+    _instance->onDisconnect(sessionPresent);
+  }
+}
+
+void MQTTController::onError(esp_mqtt_error_codes_t error)
+{
+  YBP.printf("⚠️ MQTT Error: %d\n", error.error_type);
+
+  // if this is the first connection attempt and we got an error
+  if (_firstConnection) {
+    // we dont want to keep trying
+    disconnect();
+
+    // send error message to ADMIN
+    JsonDocument output;
+    char errorMsg[128];
+    sprintf(errorMsg, "MQTT connection error: %d", error.error_type);
+    _app.protocol.generateErrorJSON(output, errorMsg);
+
+    // send to all ADMIN clients
+    _app.protocol.sendToAll(output.as<JsonVariantConst>(), ADMIN);
+  }
+}
+
+void MQTTController::_onErrorStatic(esp_mqtt_error_codes_t error)
+{
+  if (_instance) {
+    _instance->onError(error);
   }
 }
 

@@ -30,12 +30,11 @@ class MQTTController : public BaseController
     bool setup() override;
     void loop() override;
 
-    bool connect();
+    bool connect(bool waitBlocking = false);
     void disconnect();
     bool isConnected();
 
     void onTopic(const char* topic, int qos, OnMessageUserCallback callback);
-    void onConnect(bool sessionPresent);
     void publish(const char* topic, const char* payload, bool use_prefix = true);
     void traverseJSON(JsonVariant node, const char* topic_prefix);
 
@@ -45,15 +44,23 @@ class MQTTController : public BaseController
   private:
     PsychicMqttClient mqttClient;
     unsigned long previousMQTTMillis = 0;
+    bool _firstConnection = true;
 
     void haDiscovery();
     void receiveMessage(const char* topic, const char* payload, int retain, int qos, bool dup);
+
+    // our actual callbacks
+    void onConnect(bool sessionPresent);
+    void onDisconnect(bool sessionPresent);
+    void onError(esp_mqtt_error_codes_t error);
 
     // --- THE CALLBACK TRAP ---
     // Libraries expecting C-style function pointers cannot take normal member functions.
     // We use a static instance pointer and static methods to bridge the gap.
     static MQTTController* _instance;
     static void _onConnectStatic(bool sessionPresent);
+    static void _onDisconnectStatic(bool sessionPresent);
+    static void _onErrorStatic(esp_mqtt_error_codes_t error);
     static void _receiveMessageStatic(const char* topic, const char* payload, int retain, int qos, bool dup);
 
     void append_to_topic(char* buf, size_t& len, size_t cap, const char* piece);

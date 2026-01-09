@@ -2,6 +2,13 @@
 
 - Consolidated build scripts into single `yarrboard_framework.py` (replaces `git_version.py`, `gulp.py`, `gulpfile.mjs`)
 - Added `custom_enable_minify_html` platformio.ini configuration option for HTML minification control
+- Improved MQTT error handling and connection management:
+  - Added `onDisconnect()` callback hook to detect MQTT disconnection events
+  - Added `onError()` callback hook to handle MQTT connection errors
+  - Added `_firstConnection` flag to track initial connection attempts
+  - First connection errors now properly disconnect and notify admin users with error details
+  - Changed `connect()` method to accept optional `waitBlocking` parameter for non-blocking connection attempts
+  - Replaced `disconnect()` calls with `forceStop()` for proper MQTT client shutdown
 
 # v2.2.1
 
