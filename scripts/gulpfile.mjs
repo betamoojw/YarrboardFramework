@@ -215,7 +215,7 @@ const PROJECT_ASSETS = findProjectAssets();
 const HTML_MIN_OPTIONS = {
     removeComments: false,
     minifyCSS: true,
-    minifyJS: true
+    minifyJS: false
 };
 
 const INLINE_OPTIONS = {
