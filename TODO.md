@@ -1,8 +1,12 @@
-## Long Term
+# v2.2.1
 
 * remove minifyCSS and minifyJS from gulpfile - or can we make it configurable?
 * mqtt connection showing as disconnected
 * move all mqtt stuff out of prototcol into mqtt controller
+  * mqtt connection status -> stats not config
+
+## Long Term
+
 * add static ip address support (yarrboard-firmware #11)
 * add compile targets for each board type to firmware releases
 * readme: add minimum flash size (8mb) + talk about A/B partition for OTA
