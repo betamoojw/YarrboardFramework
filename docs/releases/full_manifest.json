@@ -5,6 +5,12 @@
     "description": "This is a test board for testing purposes.",
     "firmware": [
       {
+        "version": "2.2.3",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/REV_A_B_C/2.2.3.bin",
+        "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/REV_A_B_C/2.2.3-espwebtools/manifest.json",
+        "changelog": "# v2.2.3\n\n- Forgot to include the gulpfile in its new location."
+      },
+      {
         "version": "2.2.2",
         "url": "https://hoeken.github.io/YarrboardFramework/releases/REV_A_B_C/2.2.2.bin",
         "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/REV_A_B_C/2.2.2-espwebtools/manifest.json",
