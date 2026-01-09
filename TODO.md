@@ -1,5 +1,6 @@
 ## Long Term
 
+* remove minifyCSS and minifyJS from gulpfile - or can we make it configurable?
 * mqtt connection showing as disconnected
 * move all mqtt stuff out of prototcol into mqtt controller
 * add static ip address support (yarrboard-firmware #11)
