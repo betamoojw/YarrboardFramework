@@ -1,3 +1,8 @@
+# v2.2.2
+
+- Replaced `gulp-htmlmin` with `gulp-html-minifier-terser`
+- Made HTML minification optional via `enable_minify_html` flag
+
 # v2.2.1
 
 - Moved MQTT configuration handling from `ProtocolController` to `MQTTController` for better separation of concerns

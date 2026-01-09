@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import gulp from 'gulp';
 const { series, src, dest } = gulp;
-import htmlmin from 'gulp-htmlmin';
+import htmlmin from 'gulp-html-minifier-terser';
 import cleancss from 'gulp-clean-css';
 // import uglify from 'gulp-uglify-es';
 import gzip from 'gulp-gzip';
@@ -53,8 +53,12 @@ if (!FRAMEWORK_PATH) {
 // This is where project-specific assets (html/, src/, etc.) are located
 const PROJECT_PATH = process.env.YARRBOARD_PROJECT_PATH || '.';
 
+// Check if minification should be enabled
+const ENABLE_MINIFY = process.env.YARRBOARD_ENABLE_MINIFY !== undefined;
+
 console.log(`Using YarrboardFramework from: ${FRAMEWORK_PATH}`);
 console.log(`Using project path: ${PROJECT_PATH}`);
+console.log(`HTML minification: ${ENABLE_MINIFY ? 'ENABLED' : 'DISABLED'}`);
 
 // Determine the output directory for generated headers
 // If src/ folder exists, use src/gulp, otherwise use gulp/ at top level
@@ -213,9 +217,10 @@ function findProjectAssets() {
 const PROJECT_ASSETS = findProjectAssets();
 
 const HTML_MIN_OPTIONS = {
-    removeComments: false,
-    minifyCSS: true,
-    minifyJS: false
+    collapseWhitespace: true,
+    removeComments: true,
+    minifyJS: true,
+    minifyCSS: true
 };
 
 const INLINE_OPTIONS = {
@@ -369,8 +374,14 @@ async function injectAssets() {
 }
 
 function minifyAndCompress() {
-    return src(join(PATHS.tempOutput, 'index.html'))
-        .pipe(htmlmin(HTML_MIN_OPTIONS))
+    let stream = src(join(PATHS.tempOutput, 'index.html'));
+
+    // Only apply htmlmin if YARRBOARD_ENABLE_MINIFY is set
+    if (ENABLE_MINIFY) {
+        stream = stream.pipe(htmlmin(HTML_MIN_OPTIONS));
+    }
+
+    return stream
         .pipe(gzip())
         .pipe(dest(PATHS.tempOutput));
 }

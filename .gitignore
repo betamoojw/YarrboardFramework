@@ -37,3 +37,4 @@ node_modules
 examples/platformio/gulp
 Visual\ Micro
 *.gz.h
+package-lock.json

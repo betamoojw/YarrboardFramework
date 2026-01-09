@@ -98,6 +98,19 @@ else:
 
 os.environ["YARRBOARD_PROJECT_PATH"] = project_path
 
+# Check if HTML minification should be enabled
+# Users can set this in their platformio.ini with: enable_minify_html = yes
+try:
+    minify_html = env.GetProjectOption("enable_minify_html", "no")
+    if minify_html.lower() in ["yes", "true", "1", "on"]:
+        os.environ["YARRBOARD_ENABLE_MINIFY"] = "1"
+        print("HTML minification: ENABLED")
+    else:
+        print("HTML minification: DISABLED")
+except:
+    # If the option doesn't exist, minification is disabled by default
+    print("HTML minification: DISABLED (default)")
+
 print(f"Project path: {project_path}")
 print("Compressing web app into header")
 gulpfile_path = os.path.join(framework_path, "scripts", "gulpfile.mjs")
