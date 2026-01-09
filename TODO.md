@@ -1,8 +1,11 @@
-# v2.2.1
-
-
 ## Long Term
 
+* mqtt
+  * add onError and onDisconnect callbacks
+  * add _firstConnection flag
+  * onError
+    * disconnect if first connection
+    * send error message to admins
 * add static ip address support (yarrboard-firmware #11)
 * add compile targets for each board type to firmware releases
 * readme: add minimum flash size (8mb) + talk about A/B partition for OTA
