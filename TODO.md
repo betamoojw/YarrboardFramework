@@ -1,8 +1,12 @@
+## v2.3
+
+* add getSample() to RollingAverage to expose data.
+* add compile targets for each board type to firmware releases
+* readme: add minimum flash size (8mb) + talk about A/B partition for OTA
+
 ## Long Term
 
 * add static ip address support (yarrboard-firmware #11)
-* add compile targets for each board type to firmware releases
-* readme: add minimum flash size (8mb) + talk about A/B partition for OTA
 
 * currently we have a chance of collisions if http api + websockets requests happen simulataneously.
   * best to solve this as a mutex (but is this really needed?)
