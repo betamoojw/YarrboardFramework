@@ -1,6 +1,5 @@
 ## v2.3
 
-* add getSample() to RollingAverage to expose data.
 * add compile targets for each board type to firmware releases
 * readme: add minimum flash size (8mb) + talk about A/B partition for OTA
 

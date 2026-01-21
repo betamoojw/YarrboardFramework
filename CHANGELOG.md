@@ -1,6 +1,7 @@
 # v2.3.0
 
 - Added `get(i)` method to `RollingAverage` class for accessing samples by index
+- Added build support for all ESP32 chip families (esp32, esp32-c3, esp32-c5, esp32-c6, esp32-s2, esp32-s3)
 
 # v2.2.3
 

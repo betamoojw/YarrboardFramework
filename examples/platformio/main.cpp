@@ -18,22 +18,24 @@
 YarrboardApp yba;
 
 // setup for our buzzer / piezo (if present)
-// is_active:  true = monotone, false = pwm tones
-#include <controllers/BuzzerController.h>
-#ifndef YB_BUZZER_PIN
-  #define YB_BUZZER_PIN 39
-#endif
-#define YB_BUZZER_IS_ACTIVE false
+#ifdef YB_BUZZER_PIN
+  // is_active:  true = monotone, false = pwm tones
+  #include <controllers/BuzzerController.h>
+  #define YB_BUZZER_IS_ACTIVE false
 BuzzerController buzzer(yba);
+#endif
 
 // setup for our indicator LED (if present)
-#include <controllers/RGBController.h>
-#ifndef YB_STATUS_RGB_PIN
-  #define YB_STATUS_RGB_PIN 38
-#endif
-#define YB_STATUS_RGB_ORDER GRB
-#define YB_STATUS_RGB_COUNT 1
+#ifdef YB_STATUS_RGB_PIN
+  #include <controllers/RGBController.h>
+  #define YB_STATUS_RGB_ORDER GRB
+  #define YB_STATUS_RGB_COUNT 1
 RGBController<WS2812B, YB_STATUS_RGB_PIN, YB_STATUS_RGB_ORDER> rgb(yba, YB_STATUS_RGB_COUNT);
+#endif
+
+#ifndef YB_HARDWARE_VERSION
+  #define YB_HARDWARE_VERSION "UNKNOWN"
+#endif
 
 void setup()
 {
@@ -42,7 +44,7 @@ void setup()
   yba.board_name = "Framework Test";
   yba.default_hostname = "yarrboard";
   yba.firmware_version = YARRBOARD_VERSION_STR;
-  yba.hardware_version = "REV_A_B_C";
+  yba.hardware_version = YB_HARDWARE_VERSION;
   yba.manufacturer = "Test Manufacturer";
   yba.hardware_url = "http://example.com/my-hardware-page";
   yba.project_name = "Yarrboard Framework";
@@ -90,13 +92,17 @@ Tcuq3/awD5WYxvxzgxHOZyUCAwEAAQ==
     output["bar"] = foo;
   });
 
+#ifdef YB_STATUS_RGB_PIN
   // add our rgb controller in.
   yba.registerController(rgb);
+#endif
 
+#ifdef YB_BUZZER_PIN
   // add our buzzer controller in.
   buzzer.buzzerPin = YB_BUZZER_PIN;
   buzzer.isActive = YB_BUZZER_IS_ACTIVE;
   yba.registerController(buzzer);
+#endif
 
   // finally call the app setup to start the party.
   yba.setup();
