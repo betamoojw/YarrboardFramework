@@ -141,6 +141,23 @@ class RollingAverage
       return window_;
     }
 
+    /**
+     * @brief Get the sample value at a specific index.
+     *
+     * Index 0 refers to the oldest sample, and index (count-1) refers to the newest.
+     *
+     * @param i The index of the sample to retrieve (0 to count-1).
+     * @return The sample value at index i, or 0 if index is out of range.
+     */
+    inline uint32_t get(uint16_t i)
+    {
+      prune(millis());
+      if (i >= count_)
+        return 0;
+      const uint16_t idx = (head_ + i) % cap_;
+      return buf_[idx].v;
+    }
+
   private:
     struct Sample {
         uint32_t v; ///< Sample value
@@ -155,6 +172,7 @@ class RollingAverage
     uint32_t sum_ = 0;    ///< Running sum for fast average
     uint32_t window_ = 0; ///< Time window in ms
 
+    /** @brief Get the next index in the ring buffer, wrapping to 0 at capacity. */
     inline uint16_t next(uint16_t i) const { return (i + 1u == cap_) ? 0u : (i + 1u); }
 
     /**

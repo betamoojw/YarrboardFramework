@@ -1,3 +1,7 @@
+# v2.3.0
+
+- Added `get(i)` method to `RollingAverage` class for accessing samples by index
+
 # v2.2.3
 
 - Forgot to include the gulpfile in its new location.
