@@ -512,7 +512,37 @@ Built-in profiling via `IntervalTimer`:
 ### Primary Target
 - **ESP32-S3**: Full support including USB CDC and Bluetooth Improv
 - 16MB flash recommended (8MB minimum)
-- PSRAM optional but recommended for complex web interfaces
+- PSRAM optional
+
+### Memory Usage
+
+The basic requirements for Yarrboard Framework are an ESP32 S3 board with at least 8mb flash.
+
+Even though the compiled firmware is only about 2mb, due to the nature of OTA, you need 2 partitions that can each hold the full firmware.  Additionally, the board configuration json file is stored in a LittleFS partition.
+
+#### Minimal
+
+**Flash:** ~1.9MB
+**RAM:** ~323kib (201kib free heap after boot on ESP32-S3)
+
+#### Standard (with NimBLE)
+
+Adding the NimBLE bluetooth stack for provisioning ImprovWifi over bluetooth requires additional memory and flash space:
+
+**Flash:** ~2.1MB
+**RAM:** ~345kib (179kib free heap after boot on ESP32-S3)
+
+
+### Supported Targets
+
+* ESP32 (tested)
+* ESP32-S3 (tested)
+* ESP32-C3
+* ESP32-C5
+* ESP32-C6
+* ESP32-S2
+
+The firmware compiles for the other targets, but has not been tested yet.
 
 ### Peripherals
 - **RGB LED**: FastLED-compatible (WS2812, etc.)
