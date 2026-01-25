@@ -1,8 +1,38 @@
 [
     {
-        "type": "REV_A_B_C",
-        "version": "2.2.3",
-        "url": "https://hoeken.github.io/YarrboardFramework/releases/REV_A_B_C/2.2.3.bin",
-        "changelog": "# v2.2.3\n\n- Forgot to include the gulpfile in its new location."
+        "type": "esp32",
+        "version": "2.3.0",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32/2.3.0.bin",
+        "changelog": "# v2.3.0\n\n- Added `get(i)` method to `RollingAverage` class for accessing samples by index\n- Added build support for all ESP32 chip families (esp32, esp32-c3, esp32-c5, esp32-c6, esp32-s2, esp32-s3)"
+    },
+    {
+        "type": "esp32-s2",
+        "version": "2.3.0",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-s2/2.3.0.bin",
+        "changelog": "# v2.3.0\n\n- Added `get(i)` method to `RollingAverage` class for accessing samples by index\n- Added build support for all ESP32 chip families (esp32, esp32-c3, esp32-c5, esp32-c6, esp32-s2, esp32-s3)"
+    },
+    {
+        "type": "esp32-s3",
+        "version": "2.3.0",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-s3/2.3.0.bin",
+        "changelog": "# v2.3.0\n\n- Added `get(i)` method to `RollingAverage` class for accessing samples by index\n- Added build support for all ESP32 chip families (esp32, esp32-c3, esp32-c5, esp32-c6, esp32-s2, esp32-s3)"
+    },
+    {
+        "type": "esp32-c3",
+        "version": "2.3.0",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c3/2.3.0.bin",
+        "changelog": "# v2.3.0\n\n- Added `get(i)` method to `RollingAverage` class for accessing samples by index\n- Added build support for all ESP32 chip families (esp32, esp32-c3, esp32-c5, esp32-c6, esp32-s2, esp32-s3)"
+    },
+    {
+        "type": "esp32-c5",
+        "version": "2.3.0",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c5/2.3.0.bin",
+        "changelog": "# v2.3.0\n\n- Added `get(i)` method to `RollingAverage` class for accessing samples by index\n- Added build support for all ESP32 chip families (esp32, esp32-c3, esp32-c5, esp32-c6, esp32-s2, esp32-s3)"
+    },
+    {
+        "type": "esp32-c6",
+        "version": "2.3.0",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c6/2.3.0.bin",
+        "changelog": "# v2.3.0\n\n- Added `get(i)` method to `RollingAverage` class for accessing samples by index\n- Added build support for all ESP32 chip families (esp32, esp32-c3, esp32-c5, esp32-c6, esp32-s2, esp32-s3)"
     }
 ]

@@ -41,5 +41,83 @@
         "changelog": "# v2.0.1\n\n- Fixed a pathing issue with the gulp script on Windows."
       }
     ]
+  },
+  "esp32": {
+    "name": "Test Firmware for esp32",
+    "image": "img/rev_a_b_c.jpg",
+    "description": "Works on ESP32 devkit boards with at least 8MB of flash",
+    "firmware": [
+      {
+        "version": "2.3.0",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32/2.3.0.bin",
+        "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32/2.3.0-espwebtools/manifest.json",
+        "changelog": "# v2.3.0\n\n- Added `get(i)` method to `RollingAverage` class for accessing samples by index\n- Added build support for all ESP32 chip families (esp32, esp32-c3, esp32-c5, esp32-c6, esp32-s2, esp32-s3)"
+      }
+    ]
+  },
+  "esp32-s2": {
+    "name": "Test Firmware for esp32-s2",
+    "image": "img/rev_a_b_c.jpg",
+    "description": "Works on ESP32-S2 devkit boards with at least 8MB of flash",
+    "firmware": [
+      {
+        "version": "2.3.0",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-s2/2.3.0.bin",
+        "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32-s2/2.3.0-espwebtools/manifest.json",
+        "changelog": "# v2.3.0\n\n- Added `get(i)` method to `RollingAverage` class for accessing samples by index\n- Added build support for all ESP32 chip families (esp32, esp32-c3, esp32-c5, esp32-c6, esp32-s2, esp32-s3)"
+      }
+    ]
+  },
+  "esp32-s3": {
+    "name": "Test Firmware for esp32-s3",
+    "image": "img/rev_a_b_c.jpg",
+    "description": "Works on ESP32-S3 devkit boards with at least 8MB of flash",
+    "firmware": [
+      {
+        "version": "2.3.0",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-s3/2.3.0.bin",
+        "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32-s3/2.3.0-espwebtools/manifest.json",
+        "changelog": "# v2.3.0\n\n- Added `get(i)` method to `RollingAverage` class for accessing samples by index\n- Added build support for all ESP32 chip families (esp32, esp32-c3, esp32-c5, esp32-c6, esp32-s2, esp32-s3)"
+      }
+    ]
+  },
+  "esp32-c3": {
+    "name": "Test Firmware for esp32-c3",
+    "image": "img/rev_a_b_c.jpg",
+    "description": "Works on ESP32-C3 devkit boards with at least 8MB of flash",
+    "firmware": [
+      {
+        "version": "2.3.0",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c3/2.3.0.bin",
+        "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c3/2.3.0-espwebtools/manifest.json",
+        "changelog": "# v2.3.0\n\n- Added `get(i)` method to `RollingAverage` class for accessing samples by index\n- Added build support for all ESP32 chip families (esp32, esp32-c3, esp32-c5, esp32-c6, esp32-s2, esp32-s3)"
+      }
+    ]
+  },
+  "esp32-c5": {
+    "name": "Test Firmware for esp32-c5",
+    "image": "img/rev_a_b_c.jpg",
+    "description": "Works on ESP32-C5 devkit boards with at least 8MB of flash",
+    "firmware": [
+      {
+        "version": "2.3.0",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c5/2.3.0.bin",
+        "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c5/2.3.0-espwebtools/manifest.json",
+        "changelog": "# v2.3.0\n\n- Added `get(i)` method to `RollingAverage` class for accessing samples by index\n- Added build support for all ESP32 chip families (esp32, esp32-c3, esp32-c5, esp32-c6, esp32-s2, esp32-s3)"
+      }
+    ]
+  },
+  "esp32-c6": {
+    "name": "Test Firmware for esp32-c6",
+    "image": "img/rev_a_b_c.jpg",
+    "description": "Works on ESP32-C6 devkit boards with at least 8MB of flash",
+    "firmware": [
+      {
+        "version": "2.3.0",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c6/2.3.0.bin",
+        "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c6/2.3.0-espwebtools/manifest.json",
+        "changelog": "# v2.3.0\n\n- Added `get(i)` method to `RollingAverage` class for accessing samples by index\n- Added build support for all ESP32 chip families (esp32, esp32-c3, esp32-c5, esp32-c6, esp32-s2, esp32-s3)"
+      }
+    ]
   }
 }
